@@ -1,4 +1,5 @@
 import time
+from os import environ
 
 from .azureblob import AzureBlob
 from .azuretable import AzureTable
@@ -10,7 +11,7 @@ from telemetry import log
 from .monitor import thumbprint
 
 def insert_meta(config, subscription, model_key, meta):
-    azure_table = AzureTable(config.az_storage_account, config.az_storage_account_key)
+    azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
     if not azure_table.exists_table(config.az_tsana_meta_table):
         azure_table.create_table(config.az_tsana_meta_table)
     azure_table.insert_or_replace_entity(config.az_tsana_meta_table, subscription, 
@@ -34,7 +35,7 @@ def insert_meta(config, subscription, model_key, meta):
 #   meta: a Dict object which includes all the column of an model entity
 def get_meta(config, subscription, model_key):
     try: 
-        azure_table = AzureTable(config.az_storage_account, config.az_storage_account_key)
+        azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
         if not azure_table.exists_table(config.az_tsana_meta_table):
             raise Exception('Meta table not exists')
 
@@ -54,7 +55,7 @@ def get_meta(config, subscription, model_key):
 #   result: STATUS_SUCCESS / STATUS_FAIL
 #   message: description for the result 
 def update_state(config, subscription, model_key, state:ModelState=None, context:str=None, last_error:str=None): 
-    azure_table = AzureTable(config.az_storage_account, config.az_storage_account_key)
+    azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
     meta = get_meta(config, subscription, model_key)
     if meta == None or meta['state'] == ModelState.Deleted.name:
         return STATUS_FAIL, 'Model is not found!'
@@ -77,7 +78,7 @@ def update_state(config, subscription, model_key, state:ModelState=None, context
 
 def get_model_list(config, subscription):
     models = []
-    azure_table = AzureTable(config.az_storage_account, config.az_storage_account_key)
+    azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
     if not azure_table.exists_table(config.az_tsana_meta_table):
         return models
         
@@ -100,7 +101,7 @@ def get_model_list(config, subscription):
 #   entity: a entity with a correct state
 def clear_state_when_necessary(config, subscription, model_key, entity):
     if entity['state'] == ModelState.Training.name:
-        azure_table = AzureTable(config.az_storage_account, config.az_storage_account_key)
+        azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
         if not azure_table.exists_table(config.az_tsana_moniter_table):
             return entity
         
