@@ -17,7 +17,7 @@ class DemoService(PluginService):
             if meta is None:
                 return STATUS_FAIL, 'You have no permission to read Metric {}'.format(data['metricId'])
 
-            return STATUS_SUCCESS
+        return STATUS_SUCCESS, ''
 
     def do_inference(self, subscription, model_id, model_dir, parameters):
         log.info('Start to inference {}'.format('Demo'))
