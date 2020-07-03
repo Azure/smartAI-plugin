@@ -7,15 +7,15 @@ from flask import jsonify, make_response
 from collections import namedtuple
 import uuid
 
-from common.util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
-from common.util.meta import insert_meta, get_meta, update_state, get_model_list, clear_state_when_necessary
-from common.util.model import copy_tree_and_zip_and_update_remote, prepare_model
-from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
-from common.util.constant import ModelState
-from common.util.constant import InferenceState
-from common.util.monitor import init_monitor, run_monitor, stop_monitor
+from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
+from .util.meta import insert_meta, get_meta, update_state, get_model_list, clear_state_when_necessary
+from .util.model import copy_tree_and_zip_and_update_remote, prepare_model
+from .util.constant import STATUS_SUCCESS, STATUS_FAIL
+from .util.constant import ModelState
+from .util.constant import InferenceState
+from .util.monitor import init_monitor, run_monitor, stop_monitor
 
-from common.tsanaclient import TSANAClient
+from .tsanaclient import TSANAClient
 
 import logging
 from telemetry import log

@@ -4,8 +4,8 @@ from telemetry import log
 from flask import Flask, request, g, jsonify, make_response
 from flask_restful import Resource, Api
 
-from common.plugin_service import PluginService
-from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
+from .plugin_service import PluginService
+from .util.constant import STATUS_SUCCESS, STATUS_FAIL
 
 import logging
 

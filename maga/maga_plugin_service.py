@@ -6,16 +6,16 @@ import time
 import shutil
 from requests import Request
 
-from common.plugin_service import PluginService
-from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
-from common.util.constant import ModelState
-from common.util.constant import InferenceState
-from common.util.timeutil import dt_to_str, dt_to_str_file_name, str_to_dt, get_time_offset
-from common.util.csv import save_to_csv
-from common.util.azureblob import AzureBlob
-from common.util.meta import get_meta, update_state, get_model_list, clear_state_when_necessary
+from smartai_plugin.common.plugin_service import PluginService
+from smartai_plugin.common.util.constant import STATUS_SUCCESS, STATUS_FAIL
+from smartai_plugin.common.util.constant import ModelState
+from smartai_plugin.common.util.constant import InferenceState
+from smartai_plugin.common.util.timeutil import dt_to_str, dt_to_str_file_name, str_to_dt, get_time_offset
+from smartai_plugin.common.util.csv import save_to_csv
+from smartai_plugin.common.util.azureblob import AzureBlob
+from smartai_plugin.common.util.meta import get_meta, update_state, get_model_list, clear_state_when_necessary
 
-from maga.magaclient import MAGAClient
+from .magaclient import MAGAClient
 
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
