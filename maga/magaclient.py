@@ -1,7 +1,7 @@
 import json
 
-from smartai_plugin.common.util.timeutil import dt_to_str
-from smartai_plugin.common.util.retryrequests import RetryRequests
+from common.util.timeutil import dt_to_str
+from common.util.retryrequests import RetryRequests
 
 REQUEST_TIMEOUT_SECONDS = 30
 

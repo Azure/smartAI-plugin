@@ -1,4 +1,5 @@
 import os
+from os import environ
 import json
 from flask import jsonify, make_response
 import uuid
@@ -6,16 +7,16 @@ import time
 import shutil
 from requests import Request
 
-from smartai_plugin.common.plugin_service import PluginService
-from smartai_plugin.common.util.constant import STATUS_SUCCESS, STATUS_FAIL
-from smartai_plugin.common.util.constant import ModelState
-from smartai_plugin.common.util.constant import InferenceState
-from smartai_plugin.common.util.timeutil import dt_to_str, dt_to_str_file_name, str_to_dt, get_time_offset
-from smartai_plugin.common.util.csv import save_to_csv
-from smartai_plugin.common.util.azureblob import AzureBlob
-from smartai_plugin.common.util.meta import get_meta, update_state, get_model_list, clear_state_when_necessary
+from common.plugin_service import PluginService
+from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
+from common.util.constant import ModelState
+from common.util.constant import InferenceState
+from common.util.timeutil import dt_to_str, dt_to_str_file_name, str_to_dt, get_time_offset
+from common.util.csv import save_to_csv
+from common.util.azureblob import AzureBlob
+from common.util.meta import get_meta, update_state, get_model_list, clear_state_when_necessary
 
-from .magaclient import MAGAClient
+from maga.magaclient import MAGAClient
 
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
@@ -183,7 +184,7 @@ class MagaPluginService(PluginService):
                 os.remove(zip_file)
             shutil.make_archive(zip_file_base, 'zip', data_dir)
 
-            azure_blob = AzureBlob(self.config.az_tsana_model_blob_connection)
+            azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
             container_name = self.config.tsana_app_name
             azure_blob.create_container(container_name)
 
@@ -234,7 +235,7 @@ class MagaPluginService(PluginService):
                 os.remove(zip_file)
             shutil.make_archive(zip_file_base, 'zip', data_dir)
 
-            azure_blob = AzureBlob(self.config.az_tsana_model_blob_connection)
+            azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
             container_name = self.config.tsana_app_name
             azure_blob.create_container(container_name)
 

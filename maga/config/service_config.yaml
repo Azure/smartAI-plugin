@@ -3,11 +3,8 @@ tsana_api_endpoint: https://stock-exp2-api.azurewebsites.net
 series_limit: 5000000
 models_in_training_limit_per_instance: 1
 maga_service_endpoint: http://52.250.33.25:56789
-az_storage_account: tsana
-az_storage_account_key: 
 az_tsana_meta_table: modelmeta
 az_tsana_moniter_table: moniter
-az_tsana_model_blob_connection: 
 model_temp_dir: temp
 model_data_dir: data
 training_owner_life: 60
