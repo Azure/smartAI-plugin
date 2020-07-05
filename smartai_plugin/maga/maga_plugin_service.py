@@ -193,7 +193,7 @@ class MagaPluginService(PluginService):
                 azure_blob.upload_blob(container_name, blob_name, data)
 
             os.remove(zip_file)
-            blob_url = AzureBlob.generate_blob_sas(self.config.az_storage_account, self.config.az_storage_account_key, container_name, blob_name)
+            blob_url = AzureBlob.generate_blob_sas(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'), container_name, blob_name)
 
             result = {}
             result['variable'] = variable
@@ -244,7 +244,7 @@ class MagaPluginService(PluginService):
                 azure_blob.upload_blob(container_name, blob_name, data)
 
             os.remove(zip_file)
-            blob_url = AzureBlob.generate_blob_sas(self.config.az_storage_account, self.config.az_storage_account_key, container_name, blob_name)
+            blob_url = AzureBlob.generate_blob_sas(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'), container_name, blob_name)
 
             result = {}
             result['source'] = blob_url

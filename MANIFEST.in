@@ -1,0 +1,6 @@
+graft smartai_plugin
+prune smartai_plugin/.git
+prune smartai_plugin/.vscode
+prune smartai_plugin/__pycache__
+prune smartai_plugin/*/__pycache__
+prune smartai_plugin/*/*/__pycache__
