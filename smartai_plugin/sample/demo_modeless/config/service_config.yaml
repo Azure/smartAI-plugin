@@ -1,4 +1,4 @@
-tsana_app_name: demo_modeless
+tsana_app_name: demomodeless
 tsana_api_key: 335cbcd9-b141-4e5a-9b88-d1283a9a0e3f
 tsana_api_endpoint: https://stock-exp2-api.azurewebsites.net
 series_limit: 5000000

@@ -2,7 +2,7 @@ import os
 import sys
 from os import environ
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
+#sys.path.append(os.path.join(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir), os.pardir))
 
 environ['SERVICE_CONFIG_FILE'] = 'sample/demo_modeless/config/service_config.yaml'
 
