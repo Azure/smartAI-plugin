@@ -1,0 +1,10 @@
+graft smartai_plugin
+prune smartai_plugin/.git
+prune smartai_plugin/.vscode
+prune smartai_plugin/correlation
+prune smartai_plugin/custom_detector
+prune smartai_plugin/forecast
+prune smartai_plugin/maga
+prune smartai_plugin/__pycache__
+prune smartai_plugin/*/__pycache__
+prune smartai_plugin/*/*/__pycache__

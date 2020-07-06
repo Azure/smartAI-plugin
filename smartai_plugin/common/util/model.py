@@ -4,6 +4,7 @@ import traceback
 from werkzeug.utils import secure_filename
 import re
 import os
+from os import environ
 from os.path import basename
 import sys
 import logging
@@ -68,7 +69,7 @@ def copy_tree_and_zip_and_update_remote(config, subscription, model_key, timekey
             # Write timekey file
 
             container_name = config.tsana_app_name
-            azure_blob = AzureBlob(config.az_tsana_model_blob_connection)
+            azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
             print("------")
             print(zip_file)
             print(container_name)
@@ -117,7 +118,7 @@ def prepare_model(config, subscription, model_key, timekey, force = False):
         else: 
             # download from blob
             container_name = config.tsana_app_name
-            azure_blob = AzureBlob(config.az_tsana_model_blob_connection)
+            azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
             azure_blob.create_container(container_name)
             model_name = subscription + '_' + model_key
             try:

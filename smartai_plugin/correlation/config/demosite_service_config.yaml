@@ -1,10 +1,10 @@
-tsana_app_name: forecast
+tsana_app_name: correlation
 tsana_api_endpoint: https://stock-exp2-api.azurewebsites.net
 series_limit: 5000000
-models_in_training_limit_per_instance: 1
+algo_service_endpoint: http://chuwan-pc:56789
 az_storage_account: tsana
 az_storage_account_key: 
-az_tsana_meta_table: modelmetaplugintest
+az_tsana_meta_table: modelmeta
 az_tsana_moniter_table: moniter
 az_tsana_model_blob_connection: 
 model_temp_dir: temp
@@ -17,4 +17,4 @@ lstm:
   validation_freq: 2
   steps_per_epoc: 100
   train_history_step: 730
-  epoc: 3
+  epoc: 30

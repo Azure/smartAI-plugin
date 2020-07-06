@@ -38,7 +38,7 @@ spec:
       containers:
       - name: maga
         imagePullPolicy: Always
-        image: tsanaplugin.azurecr.io/maga:20200630
+        image: tsanaplugin.azurecr.io/maga:20200701
         env:
         - name: TELEMETRY_TYPE
           value: "mon3"
@@ -50,6 +50,10 @@ spec:
           value: "maga-plugin"
         - name: MON3_SERVICE
           value: "maga-plugin"
+        - name: AZURE_STORAGE_ACCOUNT
+          value: "tsana"
+        - name: AZURE_STORAGE_ACCOUNT_KEY
+          value: "<<AzureStorageAccountKey>>"
         ports:
         - containerPort: 56789
         livenessProbe:

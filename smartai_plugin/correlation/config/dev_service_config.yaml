@@ -1,8 +1,7 @@
-tsana_app_name: maga
+tsana_app_name: correlation
 tsana_api_endpoint: https://stock-exp2-api.azurewebsites.net
 series_limit: 5000000
-models_in_training_limit_per_instance: 1
-maga_service_endpoint: http://52.250.33.25:56789
+algo_service_endpoint: http://chuwan-pc:56789
 az_storage_account: tsana
 az_storage_account_key: 
 az_tsana_meta_table: modelmeta
@@ -11,3 +10,11 @@ az_tsana_model_blob_connection:
 model_temp_dir: temp
 model_data_dir: data
 training_owner_life: 60
+lstm:
+  num_hidden: 32
+  batch_size: 50
+  validation_ratio: 0.3
+  validation_freq: 2
+  steps_per_epoc: 100
+  train_history_step: 730
+  epoc: 30
