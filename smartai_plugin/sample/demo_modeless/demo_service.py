@@ -1,6 +1,6 @@
-from common.plugin_service import PluginService
-from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
-from common.util.timeutil import get_time_offset, str_to_dt, dt_to_str
+from smartai_plugin.common.plugin_service import PluginService
+from smartai_plugin.common.util.constant import STATUS_SUCCESS, STATUS_FAIL
+from smartai_plugin.common.util.timeutil import get_time_offset, str_to_dt, dt_to_str
 from telemetry import log
 import copy
 
@@ -31,15 +31,22 @@ class DemoService(PluginService):
 
             series = self.tsanaclient.get_timeseries(parameters['apiKey'], parameters['seriesSets'], start_time, end_time)
 
-            copied = copy.deepcopy(series)
+            res = []
+            for data in series or []:
+                for value in data.value or []:
+                    v = {
+                        'dim': data.dim,
+                        'metric_id': data.metric_id,
+                        'series_id': data.series_id,
+                        'value': value['value'] * amplifier,
+                        'timestamp': value['timestamp']
+                    }
 
-            for data in copied:
-                data.value = data.value * amplifier
+                    res.append(v)
 
-            self.tsanaclient.save_inference_result(parameters, copied)
+            self.tsanaclient.save_inference_result(parameters, res)
 
             return STATUS_SUCCESS, ''
         except Exception as e:
             log.error('Exception thrown by inference: ' + repr(e))
             return STATUS_FAIL, 'Exception thrown by inference: ' + repr(e)
-
