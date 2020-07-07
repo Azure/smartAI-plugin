@@ -25,15 +25,8 @@ class AzureBlob():
 
         log.info("\nUploading to Azure Storage as blob:\n\t" + blob_name)
 
-        if blob_name in self.list_blob(container_name):
-            log.info("Blob %s in container %s already exists!" % (blob_name, container_name))
-            if replace:
-                self.delete_blob(container_name, blob_name)
-            else:
-                return
-
         # Upload the created file
-        blob_client.upload_blob(data)
+        blob_client.upload_blob(data, overwrite=replace)
         log.info("Blob %s in container %s has been uploaded/updated!" % (blob_name, container_name))
             
     def list_blob(self, container_name):
