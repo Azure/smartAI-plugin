@@ -6,8 +6,8 @@ from os import environ
 
 environ['SERVICE_CONFIG_FILE'] = 'sample/demo_modeless/config/service_config.yaml'
 
-from sample.demo_modeless.demo_service import DemoService
-from common.plugin_model_api import api, PluginModelAPI, PluginModelListAPI, PluginModelTrainAPI, PluginModelInferenceAPI, app, PluginModelParameterAPI
+from smartai_plugin.sample.demo_modeless.demo_service import DemoService
+from smartai_plugin.common.plugin_model_api import api, PluginModelAPI, PluginModelListAPI, PluginModelTrainAPI, PluginModelInferenceAPI, app, PluginModelParameterAPI
 
 demo = DemoService()
 
