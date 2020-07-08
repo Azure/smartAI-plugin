@@ -3,16 +3,16 @@ import shutil
 import os
 from telemetry import log
 
-from smartai_plugin.common.plugin_service import PluginService
-from smartai_plugin.common.util.constant import STATUS_SUCCESS, STATUS_FAIL
-from smartai_plugin.common.util.timeutil import get_time_offset, str_to_dt, dt_to_str
-from smartai_plugin.common.util.csv import save_to_csv
-from smartai_plugin.common.util.metric import MetricSender
-from smartai_plugin.common.util.fill_type import Fill
-from smartai_plugin.common.util.gran import Gran
+from common.plugin_service import PluginService
+from common.util.constant import STATUS_SUCCESS, STATUS_FAIL, InferenceState
+from common.util.timeutil import get_time_offset, str_to_dt, dt_to_str
+from common.util.csv import save_to_csv
+from common.util.metric import MetricSender
+from common.util.fill_type import Fill
+from common.util.gran import Gran
 
-from .model.inference import inference, load_inference_model, load_inference_input_data
-from .model.training import train
+from model.inference import inference, load_inference_model, load_inference_input_data
+from model.training import train
 
 class ForecastPluginService(PluginService):
 
@@ -202,6 +202,7 @@ class ForecastPluginService(PluginService):
                         for idx in range(len(result)): 
                             result[idx]['timestamp'] = dt_to_str(get_time_offset(cur_time, (meta['granularityName'], meta['granularityAmount']),
                                                                                         - offset + idx))
+                            result[idx]['status'] = InferenceState.Ready.name
                             # print(result[idx]['timestamp'])
                     self.tsanaclient.save_inference_result(parameters, result)
                 else:

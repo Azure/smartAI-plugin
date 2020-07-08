@@ -106,9 +106,13 @@ class MagaPluginService(PluginService):
         while True:
             result = self.magaclient.get_result(request, resultId)
             if result['statusSummary']['status'] == 'READY' or result['statusSummary']['status'] == 'FAILED':
+                for item in result['result']:
+                    item['status'] = InferenceState.Ready.name if result['statusSummary']['status'] == 'READY' else InferenceState.Failed.name
                 break
             else:
                 log.info("Inference id: {}, result: {}".format(resultId, result))
+                for item in result['result']:
+                    item['status'] = InferenceState.Running.name
                 self.tsanaclient.save_inference_result(parameters, result['result'])
                 time.sleep(5)
 

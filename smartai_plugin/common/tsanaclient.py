@@ -225,7 +225,7 @@ class TSANAClient(object):
                         'params': parameters['instance']['params'],
                         'timestamp': item['timestamp'],
                         'result': item,
-                        'status': InferenceState.Ready.name
+                        'status': item['status']
                     })
                 self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/saveResult', body)
             return STATUS_SUCCESS, ''
