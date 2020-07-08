@@ -29,7 +29,7 @@ class DemoService(PluginService):
             else:
                 start_time = end_time
 
-            series = self.tsanaclient.get_timeseries(parameters['apiKey'], parameters['seriesSets'], start_time, end_time)
+            series = self.tsanaclient.get_timeseries(parameters['apiEndpoint'], parameters['apiKey'], parameters['seriesSets'], start_time, end_time)
 
             res = []
             for data in series or []:

@@ -48,12 +48,12 @@ class MagaPluginService(PluginService):
             for dimkey in data['dimensionFilter']: 
                 dim[dimkey] = [data['dimensionFilter'][dimkey]]
             
-            meta = self.tsanaclient.get_metric_meta(parameters['apiKey'], data['metricId'])
+            meta = self.tsanaclient.get_metric_meta(parameters['apiEndpoint'], parameters['apiKey'], data['metricId'])
             if meta is None: 
                 return STATUS_FAIL, 'Metric {} is not found.'.format(data['metricId'])
             dt = dt_to_str(str_to_dt(meta['dataStartFrom']))
             para = dict(metricId=data['metricId'], dimensions=dim, count=2, startTime=dt)     # Let's said 100 is your limitation
-            ret = self.tsanaclient.post(parameters['apiKey'], '/metrics/' + data['metricId'] + '/rank-series', data=para)
+            ret = self.tsanaclient.post(parameters['apiEndpoint'], parameters['apiKey'], '/metrics/' + data['metricId'] + '/rank-series', data=para)
             if ret is None or 'value' not in ret:
                 return STATUS_FAIL, 'Read series rank failed.'
             if len(ret['value']) == 0:
@@ -160,7 +160,7 @@ class MagaPluginService(PluginService):
         start_time, end_time = self.get_data_time_range(parameters)
 
         factor_def = parameters['seriesSets']
-        factors_data = self.tsanaclient.get_timeseries(parameters['apiKey'], factor_def, start_time, end_time)
+        factors_data = self.tsanaclient.get_timeseries(parameters['apiEndpoint'], parameters['apiKey'], factor_def, start_time, end_time)
 
         time_key = dt_to_str_file_name(end_time)
         data_dir = os.path.join(self.config.model_data_dir, time_key, str(uuid.uuid1()))
