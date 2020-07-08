@@ -2,6 +2,7 @@ import json
 import datetime
 import traceback
 import sys
+import math
 
 from .util.timeutil import get_time_offset, str_to_dt, dt_to_str
 from .util.series import Series
@@ -204,28 +205,29 @@ class TSANAClient(object):
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
     #   messagee: description for the result 
-    def save_inference_result(self, parameters, result):
+    def save_inference_result(self, parameters, result, batch_size=1000):
         try: 
 
             if len(result) <= 0: 
                 return STATUS_SUCCESS, ''
 
-            body = {
+            for batch_index in (math.ceil(len(result) / batch_size)):
+                body = {
                 'groupId': parameters['groupId'], 
                 'instanceId': parameters['instance']['instanceId'], 
                 'results': []
-            }
-
-            for item in result:
-                item['timestamp'] = dt_to_str(str_to_dt(item['timestamp']))
-                body['results'].append({
-                    'params': parameters['instance']['params'],
-                    'timestamp': item['timestamp'],
-                    'result': item,
-                    'status': InferenceState.Ready.name
-                })
-
-            self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/saveResult', body)
+                }
+                batch_start = batch_index * batch_size
+                for step in min(batch_size, len(result) - batch_start):
+                    item = result[batch_start + step]
+                    item['timestamp'] = dt_to_str(str_to_dt(item['timestamp']))
+                    body['results'].append({
+                        'params': parameters['instance']['params'],
+                        'timestamp': item['timestamp'],
+                        'result': item,
+                        'status': InferenceState.Ready.name
+                    })
+                self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/saveResult', body)
             return STATUS_SUCCESS, ''
         except Exception as e: 
             traceback.print_exc(file=sys.stdout)
