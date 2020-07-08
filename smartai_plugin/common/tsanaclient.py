@@ -23,7 +23,7 @@ class TSANAClient(object):
         self.retryrequests = RetryRequests(retrycount, retryinterval)
 
     def post(self, api_endpoint, api_key, path, data):
-        url = api_endpoint + path
+        url = api_endpoint.rstrip('/') + path
         headers = {
             "x-api-key": api_key,
             "Content-Type": "application/json"
@@ -43,7 +43,7 @@ class TSANAClient(object):
             raise Exception('TSANA service api "{}" failed, request:{}, {}'.format(path, data, str(e)))
 
     def put(self, api_endpoint, api_key, path, data):
-        url = api_endpoint + path
+        url = api_endpoint.rstrip('/') + path
         headers = {
             "x-api-key": api_key,
             "Content-Type": "application/json"
@@ -63,7 +63,7 @@ class TSANAClient(object):
             raise Exception('TSANA service api "{}" failed, request:{}, {}'.format(path, data, str(e)))
 
     def get(self, api_endpoint, api_key, path):
-        url = api_endpoint + path
+        url = api_endpoint.rstrip('/') + path
         headers = {
             "x-api-key": api_key,
             "Content-Type": "application/json"
