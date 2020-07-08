@@ -213,7 +213,7 @@ class MagaPluginService(PluginService):
         start_time, end_time = self.get_data_time_range(parameters)
 
         factor_def = parameters['seriesSets']
-        factors_data = self.tsanaclient.get_timeseries(parameters['apiKey'], factor_def, start_time, end_time)
+        factors_data = self.tsanaclient.get_timeseries(parameters['apiEndpoint'], parameters['apiKey'], factor_def, start_time, end_time)
 
         time_key = dt_to_str_file_name(end_time)
         data_dir = os.path.join(self.config.model_data_dir, time_key, str(uuid.uuid1()))

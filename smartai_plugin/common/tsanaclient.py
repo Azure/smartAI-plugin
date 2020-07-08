@@ -211,14 +211,14 @@ class TSANAClient(object):
             if len(result) <= 0: 
                 return STATUS_SUCCESS, ''
 
-            for batch_index in (math.ceil(len(result) / batch_size)):
+            for batch_index in range(math.ceil(len(result) / batch_size)):
                 body = {
                 'groupId': parameters['groupId'], 
                 'instanceId': parameters['instance']['instanceId'], 
                 'results': []
                 }
                 batch_start = batch_index * batch_size
-                for step in min(batch_size, len(result) - batch_start):
+                for step in range(min(batch_size, len(result) - batch_start)):
                     item = result[batch_start + step]
                     item['timestamp'] = dt_to_str(str_to_dt(item['timestamp']))
                     body['results'].append({
