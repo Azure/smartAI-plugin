@@ -167,6 +167,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ## get_metric_meta
 ### To get the meta of a specific metric from TSANA
 ### Params:
+#### api_endpoint: api endpoint for specific user
 #### api_key: api key for specific user
 #### metric_id: a UUID string
 ### Response:
@@ -175,6 +176,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ## get_dimesion_values
 ### To get the dimension value of a specific dimension of a metric from TSANA
 ### Params:
+#### api_endpoint: api endpoint for specific user
 #### api_key: api key for specific user
 #### metric_id: a UUID string
 #### dimension_name: a string
@@ -184,6 +186,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ## get_timeseries
 ### Query time series from TSANA
 ### Params:
+#### api_endpoint: api endpoint for specific user
 #### api_key: api key for specific user
 #### series_sets: Array of series set
 #### start_time: inclusive, the first timestamp to be query
@@ -198,6 +201,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ### Save a training result back to TSANA
 ### Params:
 #### parameters: a dict object which should includes
+    apiEndpoint: api endpoint for specific user
     apiKey: api key for specific user
     groupId: groupId in TSANA, which is copied from inference request, or from the entity
     instance: instance object, which is copied from the inference request, or from the entity
@@ -212,6 +216,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ### Save a inference result back to TSANA
 ### Params:
 #### parameters: a dict object which should includes
+    apiEndpoint: api endpoint for specific user
     apiKey: api key for specific user
     groupId: groupId in TSANA, which is copied from inference request, or from the entity
     instance: instance object, which is copied from the inference request, or from the entity
@@ -224,6 +229,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ### Save a inference result back to TSANA
 ### Params:
 #### parameters: a dict object which should includes
+    apiEndpoint: api endpoint for specific user
     apiKey: api key for specific user
     groupId: groupId in TSANA, which is copied from inference request, or from the entity
     instance: instance object, which is copied from the inference request, or from the entity
