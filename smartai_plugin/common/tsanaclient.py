@@ -4,7 +4,7 @@ import traceback
 import sys
 import math
 
-from .util.timeutil import get_time_offset, str_to_dt, dt_to_str
+from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
 from .util.series import Series
 from .util.retryrequests import RetryRequests
 from .util.constant import STATUS_SUCCESS, STATUS_FAIL
@@ -110,16 +110,12 @@ class TSANAClient(object):
     #   granularityAmount: if granularityName is Custom, granularityAmount is the seconds of the exact granularity
     # Return: 
     #   A array of Series object
-    def get_timeseries(self, api_endpoint, api_key, series_sets, start_time, end_time, offset=0, granularityName=None, granularityAmount=0,
-                       top=1):
-        if offset != 0 and granularityName is None:
-            offset = 0
-
+    def get_timeseries(self, api_endpoint, api_key, series_sets, start_time, end_time, offset=0, top=1):
         end_str = dt_to_str(end_time)
         start_str = dt_to_str(start_time)
         dedup = {}
-        series = []
 
+        multi_series_data = []
         # Query each series's tag
         for data in series_sets:
             dim = {}
@@ -131,6 +127,7 @@ class TSANAClient(object):
 
             para = dict(metricId=data['metricId'], dimensions=dim, count=top, startTime=start_str)
             ret = self.post(api_endpoint, api_key, '/metrics/' + data['metricId'] + '/rank-series', data=para)
+            series = []
             for s in ret['value']:
                 if s['seriesId'] not in dedup:
                     s['startTime'] = start_str
@@ -140,29 +137,30 @@ class TSANAClient(object):
                     del s['dimensions']
                     series.append(s)
                     dedup[s['seriesId']] = True
+            
+            if len(series) > 0:
+                granularityName = data['metricMeta']['granularityName']
+                granularityAmount = data['metricMeta']['granularityAmount']
+                timestamp_num = len(get_time_list(start_time, end_time, (granularityName, granularityAmount)))
+                series_batch_size = max(10000 // timestamp_num, 1)
 
-        # Query the data
-        multi_series_data = None
-        if len(series) > 0:
-            ret = self.post(api_endpoint, api_key, '/metrics/series/data', data=dict(value=series))
-            if granularityName is not None:
-                multi_series_data = [
-                    Series(factor['id']['metricId'], series[idx]['seriesId'], factor['id']['dimension'],
-                           [dict(timestamp=get_time_offset(str_to_dt(y[0]), (granularityName, granularityAmount),
-                                                           offset)
-                                 , value=y[1])
-                            for y in factor['values']])
-                    for idx, factor in enumerate(ret['value'])
-                ]
-            else:
-                multi_series_data = [
-                    Series(factor['id']['metricId'], series[idx]['seriesId'], factor['id']['dimension'],
-                           value=[dict(timestamp=y[0]
-                                       , value=y[1])
-                                  for y in factor['values']])
-                    for idx, factor in enumerate(ret['value'])
-                ]
-        else:
+                series_index = 0
+                while series_index < len(series):
+                    sub_series = []
+                    for i in range(min(series_batch_size, len(series) - series_index)):
+                        sub_series.append(series[series_index])
+                        series_index += 1
+                    ret = self.post(api_endpoint, api_key, '/metrics/series/data', data=dict(value=sub_series))
+                    sub_multi_series_data = [
+                        Series(factor['id']['metricId'], sub_series[idx]['seriesId'], factor['id']['dimension'],
+                                [dict(timestamp=get_time_offset(str_to_dt(y[0]), (granularityName, granularityAmount),
+                                                                offset)
+                                        , value=y[1])
+                                for y in factor['values']])
+                        for idx, factor in enumerate(ret['value'])]
+                    multi_series_data.extend(sub_multi_series_data)
+    
+        if not len(multi_series_data):
             raise Exception("Series is empty")
 
         return multi_series_data
