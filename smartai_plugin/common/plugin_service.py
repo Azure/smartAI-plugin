@@ -93,7 +93,6 @@ class PluginService():
             else:
                 raise Exception(message)
         except Exception as e:
-            log.error()
             if callback is not None:
                 callback(subscription, model_id, parameters, ModelState.Failed, timekey, str(e))
         finally:
