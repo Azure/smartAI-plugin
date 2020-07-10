@@ -20,7 +20,6 @@ def try_except(fn):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
-            log.error("-----Exception-----")
             return make_response(jsonify(dict(result=STATUS_FAIL, message='Unknown error, please check your request. ' + str(e))), 502)
     return wrapped
 

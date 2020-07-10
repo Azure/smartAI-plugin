@@ -37,8 +37,7 @@ loop = asyncio.new_event_loop()
 #monitor infras
 sched = BackgroundScheduler()
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+from telemetry import log
 
 def load_config(path):
     try:
@@ -86,7 +85,6 @@ class PluginService():
             model_dir = os.path.join(self.config.model_temp_dir, subscription + '_' + model_id + '_' + str(timekey))
             os.makedirs(model_dir, exist_ok=True)
             result, message = self.do_train(subscription, model_id, model_dir, parameters)
-            log.info("Train result, %s", message)
             
             if result == STATUS_SUCCESS:
                 # in the callback, the model will be moved from temp dir to prd dir
@@ -95,6 +93,7 @@ class PluginService():
             else:
                 raise Exception(message)
         except Exception as e:
+            log.error()
             if callback is not None:
                 callback(subscription, model_id, parameters, ModelState.Failed, timekey, str(e))
         finally:
@@ -126,7 +125,7 @@ class PluginService():
         return STATUS_SUCCESS, ''
 
     def train_callback(self, subscription, model_id, parameters, model_state, timekey, last_error=None):
-        log.info("Training callback %s by %s , state = %s" % (model_id, subscription, model_state))
+        log.info("Training callback %s by %s , state = %s, last_error = %s" % (model_id, subscription, model_state, last_error if last_error is not None else ''))
         meta = get_meta(self.config, subscription, model_id)
         if meta is None or meta['state'] == ModelState.Deleted.name:
             return STATUS_FAIL, 'Model is not found! '  
@@ -142,7 +141,7 @@ class PluginService():
         return self.tsanaclient.save_training_result(parameters, model_id, model_state.name, last_error)
 
     def inference_callback(self, subscription, model_id, parameters, timekey, result, last_error=None):
-        log.info ("inference callback %s by %s , result = %s" % (model_id, subscription, result))
+        log.info ("inference callback %s by %s , result = %s, last_error = %s" % (model_id, subscription, result, last_error if last_error is not None else ''))
         if result == STATUS_FAIL: 
             # Inference failed
             # Do a model update

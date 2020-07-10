@@ -163,7 +163,7 @@ class TSANAClient(object):
                     for idx, factor in enumerate(ret['value'])
                 ]
         else:
-            log.info("Series is empty")
+            raise Exception("Series is empty")
 
         return multi_series_data
 
@@ -190,8 +190,8 @@ class TSANAClient(object):
 
             self.put(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/modelKey', body)
             return STATUS_SUCCESS, ''
-        except Exception as e: 
-            traceback.print_exc(file=sys.stdout)
+        except Exception as e:
+            log.track_exception(traceback.format_exc())
             return STATUS_FAIL, str(e)
 
     # Save a inference result back to TSANA
@@ -230,7 +230,7 @@ class TSANAClient(object):
                 self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/saveResult', body)
             return STATUS_SUCCESS, ''
         except Exception as e: 
-            traceback.print_exc(file=sys.stdout)
+            log.track_exception(traceback.format_exc())
             return STATUS_FAIL, str(e)
 
     # Save a inference result back to TSANA
@@ -263,7 +263,7 @@ class TSANAClient(object):
             self.post(parameters['apiEndpoint'], parameters['apiKey'], '/pushData', body)
             return STATUS_SUCCESS, ''
         except Exception as e: 
-            traceback.print_exc(file=sys.stdout)
+            log.track_exception(traceback.format_exc())
             return STATUS_FAIL, str(e)
 
 
@@ -280,5 +280,5 @@ class TSANAClient(object):
             
             return STATUS_SUCCESS, '', ret
         except Exception as e: 
-            traceback.print_exc(file=sys.stdout)
+            log.track_exception(traceback.format_exc())
             return STATUS_FAIL, str(e), None

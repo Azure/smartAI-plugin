@@ -5,7 +5,7 @@ from os import environ
 from .azureblob import AzureBlob
 from .azuretable import AzureTable
 
-logger = logging.getLogger(__name__)
+from telemetry import log
 
 thumbprint = str(time.time())
 
@@ -29,7 +29,7 @@ def run_monitor(config):
                         ping = tk)    
 
 def stop_monitor(config):
-    logger.info('Monitor exit! ')
+    log.info('Monitor exit! ')
 
     try: 
         azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))

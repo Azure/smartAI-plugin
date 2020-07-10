@@ -36,7 +36,6 @@ class AzureBlob():
         blob_list = self.blob_service_client.get_container_client(container_name).list_blobs()
         blobs = []
         for blob in blob_list:
-            log.info("\t" + blob.name)
             blobs.append(blob.name)
 
         return blobs   
