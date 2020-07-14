@@ -8,4 +8,4 @@ WORKDIR /usr/src/app/smartAI-plugin
 
 EXPOSE 56789
 
-ENTRYPOINT ["gunicorn","-c","gunicorn_config.py","dummy.run_server:app"]
+ENTRYPOINT ["gunicorn","-c","gunicorn_config.py","sample.dummy.run_server:app"]

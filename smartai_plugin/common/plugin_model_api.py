@@ -1,4 +1,5 @@
 import time
+import traceback
 from telemetry import log
 
 from flask import Flask, request, g, jsonify, make_response
@@ -20,7 +21,8 @@ def try_except(fn):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
-            return make_response(jsonify(dict(result=STATUS_FAIL, message='Unknown error, please check your request. ' + str(e))), 502)
+            error_message = str(e) + '\n' + traceback.format_exc()
+            return make_response(jsonify(dict(result=STATUS_FAIL, message='Unknown error, please check your request. ' + error_message)), 502)
     return wrapped
 
 @app.route('/', methods=['GET'])

@@ -1,6 +1,5 @@
 import json
 import datetime
-import traceback
 import sys
 import math
 
@@ -189,7 +188,6 @@ class TSANAClient(object):
             self.put(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/modelKey', body)
             return STATUS_SUCCESS, ''
         except Exception as e:
-            log.track_exception(traceback.format_exc())
             return STATUS_FAIL, str(e)
 
     # Save a inference result back to TSANA
@@ -227,8 +225,7 @@ class TSANAClient(object):
                     })
                 self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/saveResult', body)
             return STATUS_SUCCESS, ''
-        except Exception as e: 
-            log.track_exception(traceback.format_exc())
+        except Exception as e:
             return STATUS_FAIL, str(e)
 
     # Save a inference result back to TSANA
@@ -260,8 +257,7 @@ class TSANAClient(object):
 
             self.post(parameters['apiEndpoint'], parameters['apiKey'], '/pushData', body)
             return STATUS_SUCCESS, ''
-        except Exception as e: 
-            log.track_exception(traceback.format_exc())
+        except Exception as e:
             return STATUS_FAIL, str(e)
 
 
@@ -277,6 +273,5 @@ class TSANAClient(object):
                                 + dt_to_str(end_time))
             
             return STATUS_SUCCESS, '', ret
-        except Exception as e: 
-            log.track_exception(traceback.format_exc())
+        except Exception as e:
             return STATUS_FAIL, str(e), None

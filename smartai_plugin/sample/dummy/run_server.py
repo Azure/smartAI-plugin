@@ -4,9 +4,9 @@ from os import environ
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 
-environ['SERVICE_CONFIG_FILE'] = 'dummy/config/service_config.yaml'
+environ['SERVICE_CONFIG_FILE'] = 'sample/dummy/config/service_config.yaml'
 
-from dummy.dummy_plugin_service import DummyPluginService
+from dummy_plugin_service import DummyPluginService
 from common.plugin_model_api import api, PluginModelAPI, PluginModelListAPI, PluginModelTrainAPI, \
     PluginModelInferenceAPI, app, PluginModelParameterAPI
 

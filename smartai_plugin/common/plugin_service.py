@@ -3,6 +3,7 @@ import time
 from time import gmtime, strftime
 import os
 import shutil
+import traceback
 from flask import jsonify, make_response
 from collections import namedtuple
 import uuid
@@ -93,8 +94,9 @@ class PluginService():
             else:
                 raise Exception(message)
         except Exception as e:
+            error_message = str(e) + '\n' + traceback.format_exc()
             if callback is not None:
-                callback(subscription, model_id, parameters, ModelState.Failed, timekey, str(e))
+                callback(subscription, model_id, parameters, ModelState.Failed, timekey, error_message)
         finally:
             shutil.rmtree(model_dir)
         return STATUS_SUCCESS, ''
@@ -119,8 +121,9 @@ class PluginService():
             if callback is not None:
                 callback(subscription, model_id, parameters, timekey, result, message)    
         except Exception as e:
+            error_message = str(e) + '\n' + traceback.format_exc()
             if callback is not None:
-                callback(subscription, model_id, parameters, timekey, STATUS_FAIL, str(e))
+                callback(subscription, model_id, parameters, timekey, STATUS_FAIL, error_message)
         return STATUS_SUCCESS, ''
 
     def train_callback(self, subscription, model_id, parameters, model_state, timekey, last_error=None):
@@ -172,9 +175,10 @@ class PluginService():
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_SUCCESS, message='Training task created', modelState=ModelState.Training.name)), 201)
         except Exception as e: 
             meta = get_meta(self.config, subscription, model_id)
+            error_message = str(e) + '\n' + traceback.format_exc()
             if meta is not None and meta['timekey'] == timekey: 
-                update_state(self.config, subscription, model_id, ModelState.Failed, None, str(e))
-            return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Fail to create new task ' + str(e), modelState=ModelState.Failed.name)), 400)
+                update_state(self.config, subscription, model_id, ModelState.Failed, None, error_message)
+            return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Fail to create new task ' + error_message, modelState=ModelState.Failed.name)), 400)
 
     def inference(self, request, model_id):
         request_body = json.loads(request.data)
@@ -215,7 +219,8 @@ class PluginService():
             meta = clear_state_when_necessary(self.config, subscription, model_id, meta)
             return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_SUCCESS, message='', modelState=meta['state'])), 200)
         except Exception as e:
-            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_FAIL, message=str(e), modelState=ModelState.Failed.name)), 400)
+            error_message = str(e) + '\n' + traceback.format_exc()
+            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_FAIL, message=error_message, modelState=ModelState.Failed.name)), 400)
         
     def list_models(self, request):
         subscription = request.headers.get('apim-subscription-id', 'Official')
@@ -231,7 +236,8 @@ class PluginService():
             else:
                 raise Exception(message)
         except Exception as e:
-            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_FAIL, message=str(e), modelState=ModelState.Failed.name)), 400)
+            error_message = str(e) + '\n' + traceback.format_exc()
+            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_FAIL, message=error_message, modelState=ModelState.Failed.name)), 400)
 
     def verify(self, request):
         request_body = json.loads(request.data)
