@@ -1,9 +1,0 @@
-tsana_app_name: maga
-series_limit: 5000000
-models_in_training_limit_per_instance: 1
-maga_service_endpoint: http://maga-algo-service.westus2.cloudapp.azure.com:56789
-az_tsana_meta_table: modelmeta
-az_tsana_moniter_table: moniter
-model_temp_dir: temp
-model_data_dir: data
-training_owner_life: 60
