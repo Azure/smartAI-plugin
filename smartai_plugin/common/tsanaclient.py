@@ -13,6 +13,12 @@ from telemetry import log
 
 REQUEST_TIMEOUT_SECONDS = 30
 
+def get_field_idx(fields, target):
+    for idx, field in enumerate(fields):
+        if field == '__FIELD__.' + target:
+            return idx
+
+    raise Exception("Not found field {} in {}".format(target, ','.join(fields)))
 
 class TSANAClient(object):
     def __init__(self, series_limit, username=None, password=None, retrycount=3, retryinterval=1000):
@@ -109,7 +115,7 @@ class TSANAClient(object):
     #   granularityAmount: if granularityName is Custom, granularityAmount is the seconds of the exact granularity
     # Return: 
     #   A array of Series object
-    def get_timeseries(self, api_endpoint, api_key, series_sets, start_time, end_time, offset=0, top=1):
+    def get_timeseries(self, api_endpoint, api_key, series_sets, start_time, end_time, offset=0, top=1, fields_filter=[]):
         end_str = dt_to_str(end_time)
         start_str = dt_to_str(start_time)
         dedup = {}
@@ -152,9 +158,8 @@ class TSANAClient(object):
                     ret = self.post(api_endpoint, api_key, '/metrics/series/data', data=dict(value=sub_series))
                     sub_multi_series_data = [
                         Series(factor['id']['metricId'], sub_series[idx]['seriesId'], factor['id']['dimension'],
-                                [dict(timestamp=get_time_offset(str_to_dt(y[0]), (granularityName, granularityAmount),
-                                                                offset)
-                                        , value=y[1])
+                                [dict(timestamp=get_time_offset(str_to_dt(y[0]), (granularityName, granularityAmount), offset), 
+                                        value=y[1], **{field: y[get_field_idx(factor['fields'], field)] for field in fields_filter})
                                 for y in factor['values']])
                         for idx, factor in enumerate(ret['value'])]
                     multi_series_data.extend(sub_multi_series_data)
