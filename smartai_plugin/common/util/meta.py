@@ -87,7 +87,7 @@ def get_model_list(config, subscription):
     for entity in entities.items:
         models.append(dict(modelId=entity['RowKey'],
             state=entity['state'] if 'state' in entity else 'UNKNOWN',
-            timekey=entity['timekey']))
+            timekey=entity['timekey'] if 'timekey' in entity else ''))
     return models
 
 # Make sure there is no a dead process is owning the training
