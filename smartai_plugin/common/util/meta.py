@@ -24,7 +24,8 @@ def insert_meta(config, subscription, model_key, meta):
             inst_id=meta['instance']['instanceId'], 
             para=str(meta['instance']['params']),
             state=ModelState.Training.name,
-            timekey=time.time())
+            ctime=time.time(),
+            mtime=time.time())
 
 # Get a model entity from meta
 # Parameters: 
@@ -69,10 +70,10 @@ def update_state(config, subscription, model_key, state:ModelState=None, context
     if last_error is not None:
         meta['last_error'] = last_error
 
-    meta['timekey'] = time.time()
+    meta['mtime'] = time.time()
     etag = azure_table.insert_or_replace_entity2(config.az_tsana_meta_table, meta)
 
-    log.info("Insert or replace %s to table %s, result: %s." % (model_key, config.az_tsana_meta_table, etag))
+    log.info("Insert or replace %s to table %s, state: %s, context: %s, last_error: %s, result: %s." % (model_key, config.az_tsana_meta_table, state.name, context, last_error, etag))
 
     return STATUS_SUCCESS, ''
 
@@ -86,8 +87,14 @@ def get_model_list(config, subscription):
     
     for entity in entities.items:
         models.append(dict(modelId=entity['RowKey'],
-            state=entity['state'] if 'state' in entity else 'UNKNOWN',
-            timekey=entity['timekey'] if 'timekey' in entity else ''))
+            groupId=entity['group_id'],
+            appId=entity['app_id'],
+            appName=entity['app_name'],
+            instanceName=entity['inst_name'],
+            instanceId=entity['inst_id'],
+            state=entity['state'] if 'state' in entity else '',
+            ctime=entity['ctime'] if 'ctime' in entity else '',
+            mtime=entity['mtime'] if 'mtime' in entity else ''))
     return models
 
 # Make sure there is no a dead process is owning the training
@@ -110,8 +117,8 @@ def clear_state_when_necessary(config, subscription, model_key, entity):
             monitor_entity = azure_table.get_entity(config.az_tsana_moniter_table, config.tsana_app_name, thumbprint)
         except: 
             monitor_entity = None
-        now = time.time()
         
+        now = time.time()
         # Problem is server time sync
         if monitor_entity is None or (now - float(monitor_entity['ping']) > config.training_owner_life): 
             # The owner is dead, then
