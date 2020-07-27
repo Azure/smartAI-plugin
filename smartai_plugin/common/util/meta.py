@@ -73,7 +73,8 @@ def update_state(config, subscription, model_id, state:ModelState=None, context:
     meta['mtime'] = time.time()
     etag = azure_table.insert_or_replace_entity2(config.az_tsana_meta_table, meta)
 
-    log.info("Insert or replace %s to table %s, state: %s, context: %s, last_error: %s, result: %s." % (model_id, config.az_tsana_meta_table, state.name, context, last_error, etag))
+    log.info("Insert or replace %s to table %s, state: %s, context: %s, last_error: %s, result: %s." % (model_id, config.az_tsana_meta_table, 
+        state.name if state else '', context if context else '', last_error if last_error else '', etag))
 
     return STATUS_SUCCESS, ''
 
