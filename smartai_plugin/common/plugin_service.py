@@ -145,7 +145,7 @@ class PluginService():
         return self.tsanaclient.save_training_result(parameters, model_id, model_state.name, last_error)
 
     def inference_callback(self, subscription, model_id, parameters, result, last_error=None):
-        log.info ("inference callback %s by %s , result = %s, last_error = %s" % (model_id, subscription, result, last_error if last_error is not None else ''))
+        log.info ("Inference callback %s by %s , result = %s, last_error = %s" % (model_id, subscription, result, last_error if last_error is not None else ''))
 
     def train(self, request):
         request_body = json.loads(request.data)
@@ -165,7 +165,10 @@ class PluginService():
 
         log.info('Create training task')
         try:
-            model_id = str(uuid.uuid1())
+            if 'modelId' in request_body:
+                model_id = request_body['modelId']
+            else:
+                model_id = str(uuid.uuid1())
             insert_meta(self.config, subscription, model_id, request_body)
             meta = get_meta(self.config, subscription, model_id)
             asyncio.ensure_future(loop.run_in_executor(executor, self.train_wrapper, subscription, model_id, request_body, self.train_callback))
