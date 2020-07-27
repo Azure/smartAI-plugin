@@ -31,15 +31,15 @@ class Metric:
 
 
 class MetricSender:
-    def __init__(self, config, subscription, model_key):
+    def __init__(self, config, subscription, model_id):
         self.__config = config
         self.__subscription = subscription
-        self.__model_key = model_key
+        self.__model_id = model_id
         pass
 
     def send(self, metric: Metric):
         txt = 'epoch: ' + str(metric.epoch) + '/' + str(metric.epochs) + ', loss: ' + str(metric.loss) + ', validate loss: ' + str(metric.valid_loss)
-        update_state(self.__config, self.__subscription, self.__model_key, None, None, txt)
+        update_state(self.__config, self.__subscription, self.__model_id, None, None, txt)
         info = {'epochs': metric.epochs, 'epoch': metric.epoch, 'loss': metric.loss, 'val_loss': metric.valid_loss}
         # logger.info("Current metric : {0}".format(json.dumps(info)))
 

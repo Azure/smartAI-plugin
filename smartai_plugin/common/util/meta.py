@@ -10,12 +10,12 @@ from telemetry import log
 
 from .monitor import thumbprint
 
-def insert_meta(config, subscription, model_key, meta):
+def insert_meta(config, subscription, model_id, meta):
     azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
     if not azure_table.exists_table(config.az_tsana_meta_table):
         azure_table.create_table(config.az_tsana_meta_table)
     azure_table.insert_or_replace_entity(config.az_tsana_meta_table, subscription, 
-            model_key, 
+            model_id, 
             group_id=meta['groupId'], 
             app_id=meta['instance']['appId'], 
             app_name=meta['instance']['appName'], 
@@ -31,33 +31,33 @@ def insert_meta(config, subscription, model_key, meta):
 # Parameters: 
 #   config: a dict object which should include AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY, AZ_META_TABLE
 #   subscription: a subscription is a name to differenciate a user, could be used for Authorization
-#   model_key: The UUID for the model created
+#   model_id: The UUID for the model created
 # Return: 
 #   meta: a Dict object which includes all the column of an model entity
-def get_meta(config, subscription, model_key):
+def get_meta(config, subscription, model_id):
     try: 
         azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
         if not azure_table.exists_table(config.az_tsana_meta_table):
             raise Exception('Meta table not exists')
 
-        entity = azure_table.get_entity(config.az_tsana_meta_table, subscription, model_key)
+        entity = azure_table.get_entity(config.az_tsana_meta_table, subscription, model_id)
         return entity
     except Exception as e: 
-        log.error("Get entity error from %s with model_key %s and subscription %s, exception: %s." % (config.az_tsana_meta_table, model_key, subscription, str(e)))
+        log.error("Get entity error from %s with model_id %s and subscription %s, exception: %s." % (config.az_tsana_meta_table, model_id, subscription, str(e)))
         return None  
 
 # Update a model entity
 # Parameters: 
 #   config: a dict object which should include AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY, THUMBPRINT, AZ_META_TABLE
 #   subscription: a subscription is a name to differenciate a user, could be used for Authorization
-#   model_key: The UUID for the model created
+#   model_id: The UUID for the model created
 #   state: model state
 # Return:
 #   result: STATUS_SUCCESS / STATUS_FAIL
 #   message: description for the result 
-def update_state(config, subscription, model_key, state:ModelState=None, context:str=None, last_error:str=None): 
+def update_state(config, subscription, model_id, state:ModelState=None, context:str=None, last_error:str=None): 
     azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
-    meta = get_meta(config, subscription, model_key)
+    meta = get_meta(config, subscription, model_id)
     if meta == None or meta['state'] == ModelState.Deleted.name:
         return STATUS_FAIL, 'Model is not found!'
 
@@ -73,7 +73,7 @@ def update_state(config, subscription, model_key, state:ModelState=None, context
     meta['mtime'] = time.time()
     etag = azure_table.insert_or_replace_entity2(config.az_tsana_meta_table, meta)
 
-    log.info("Insert or replace %s to table %s, state: %s, context: %s, last_error: %s, result: %s." % (model_key, config.az_tsana_meta_table, state.name, context, last_error, etag))
+    log.info("Insert or replace %s to table %s, state: %s, context: %s, last_error: %s, result: %s." % (model_id, config.az_tsana_meta_table, state.name, context, last_error, etag))
 
     return STATUS_SUCCESS, ''
 
@@ -102,11 +102,11 @@ def get_model_list(config, subscription):
 #   config: a dict object which should include AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY, THUMBPRINT, 
 #           AZ_META_TABLE, AZ_MONITOR_TABLE, TSANA_APP_NAME, TRAINING_OWNER_LIFE
 #   subscription: a subscription is a name to differenciate a user, could be used for Authorization
-#   model_key: The UUID for the model created
+#   model_id: The UUID for the model created
 #   entity: model entity
 # Return:
 #   entity: a entity with a correct state
-def clear_state_when_necessary(config, subscription, model_key, entity):
+def clear_state_when_necessary(config, subscription, model_id, entity):
     if entity['state'] == ModelState.Training.name:
         azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
         if not azure_table.exists_table(config.az_tsana_moniter_table):
@@ -124,6 +124,6 @@ def clear_state_when_necessary(config, subscription, model_key, entity):
             # The owner is dead, then
             # Fix the state
             entity['state'] = ModelState.Failed.name
-            update_state(config, subscription, model_key, ModelState.Failed, None, 'Training job dead')
+            update_state(config, subscription, model_id, ModelState.Failed, None, 'Training job dead')
                 
     return entity

@@ -10,11 +10,12 @@ import uuid
 
 from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
 from .util.meta import insert_meta, get_meta, update_state, get_model_list, clear_state_when_necessary
-from .util.model import copy_tree_and_zip_and_update_remote, prepare_model
+from .util.model import upload_model, download_model
 from .util.constant import STATUS_SUCCESS, STATUS_FAIL
 from .util.constant import ModelState
 from .util.constant import InferenceState
 from .util.monitor import init_monitor, run_monitor, stop_monitor
+from .util.context import Context
 
 from .tsanaclient import TSANAClient
 
@@ -68,37 +69,36 @@ class PluginService():
         atexit.register(lambda: stop_monitor(config))
         atexit.register(lambda: sched.shutdown())
 
-    def do_verify(self, subscription, parameters):
+    def do_verify(self, parameters, context:Context):
         return STATUS_SUCCESS, ''
 
-    def do_train(self, subscription, model_id, model_dir, parameters):
+    def do_train(self, model_dir, parameters, context:Context):
         return STATUS_SUCCESS, ''
 
-    def do_inference(self, subscription, model_id, model_dir, parameters):
+    def do_inference(self, model_dir, parameters, context:Context):
         return STATUS_SUCCESS, ''
 
-    def do_delete(self, subscription, model_id):
+    def do_delete(self, context:Context):
         return STATUS_SUCCESS, ''
         
-    def train_wrapper(self, subscription, model_id, parameters, timekey, callback):
+    def train_wrapper(self, subscription, model_id, parameters, callback):
         log.info("Start train wrapper for model %s by %s " % (model_id, subscription))
         try:
-            model_dir = os.path.join(self.config.model_temp_dir, subscription + '_' + model_id + '_' + str(timekey))
+            model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_'  + str(uuid.uuid1()))
             os.makedirs(model_dir, exist_ok=True)
-            result, message = self.do_train(subscription, model_id, model_dir, parameters)
+            result, message = self.do_train(model_dir, parameters, Context(subscription, model_id))
             
             if result == STATUS_SUCCESS:
-                # in the callback, the model will be moved from temp dir to prd dir
                 if callback is not None:
-                    callback(subscription, model_id, parameters, ModelState.Ready, timekey, message)
+                    callback(subscription, model_id, model_dir, parameters, ModelState.Ready, message)
             else:
                 raise Exception(message)
         except Exception as e:
             error_message = str(e) + '\n' + traceback.format_exc()
             if callback is not None:
-                callback(subscription, model_id, parameters, ModelState.Failed, timekey, error_message)
+                callback(subscription, model_id, model_dir, parameters, ModelState.Failed, error_message)
         finally:
-            shutil.rmtree(model_dir)
+            shutil.rmtree(model_dir, ignore_errors=True)
         return STATUS_SUCCESS, ''
 
     def get_inference_time_range(self, parameters):
@@ -106,54 +106,52 @@ class PluginService():
 
     # inference_window: 30
     # endTime: endtime
-    def inference_wrapper(self, subscription, model_id, parameters, timekey, callback): 
+    def inference_wrapper(self, subscription, model_id, parameters, callback): 
         log.info("Start inference wrapper %s by %s " % (model_id, subscription))
         try:
             results = [{'timestamp': timestamp, 'status': InferenceState.Running.name} for timestamp in self.get_inference_time_range(parameters)]
             self.tsanaclient.save_inference_result(parameters, results)
 
-            prepare_model(self.config, subscription, model_id, timekey, True)
-            prd_dir = os.path.join(self.config.model_temp_dir, subscription + '_' + model_id)
-            result, message = self.do_inference(subscription, model_id, prd_dir, parameters)
+            model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_'  + str(uuid.uuid1()))
+            os.makedirs(model_dir, exist_ok=True)
+            download_model(self.config, subscription, model_id, model_dir)
+            result, message = self.do_inference(model_dir, parameters, Context(subscription, model_id))
 
             # TODO: Write the result back
             log.info("Inference result here: %s" % result)
             if callback is not None:
-                callback(subscription, model_id, parameters, timekey, result, message)    
+                callback(subscription, model_id, parameters, result, message)
         except Exception as e:
             error_message = str(e) + '\n' + traceback.format_exc()
             if callback is not None:
-                callback(subscription, model_id, parameters, timekey, STATUS_FAIL, error_message)
+                callback(subscription, model_id, parameters, STATUS_FAIL, error_message)
+        finally:
+            shutil.rmtree(model_dir, ignore_errors=True)
         return STATUS_SUCCESS, ''
 
-    def train_callback(self, subscription, model_id, parameters, model_state, timekey, last_error=None):
+    def train_callback(self, subscription, model_id, model_dir, parameters, model_state, last_error=None):
         log.info("Training callback %s by %s , state = %s, last_error = %s" % (model_id, subscription, model_state, last_error if last_error is not None else ''))
         meta = get_meta(self.config, subscription, model_id)
         if meta is None or meta['state'] == ModelState.Deleted.name:
             return STATUS_FAIL, 'Model is not found! '  
 
-        # Train finish, save the model and call callback
         if model_state == ModelState.Ready:
-            result, message = copy_tree_and_zip_and_update_remote(self.config, subscription, model_id, timekey)
+            result, message = upload_model(self.config, subscription, model_id, model_dir)
             if result != STATUS_SUCCESS:
                 model_state = ModelState.Failed
-                last_error = 'Model storage failed!'
+                last_error = 'Model storage failed! ' + message
 
         update_state(self.config, subscription, model_id, model_state, None, last_error)
         return self.tsanaclient.save_training_result(parameters, model_id, model_state.name, last_error)
 
-    def inference_callback(self, subscription, model_id, parameters, timekey, result, last_error=None):
+    def inference_callback(self, subscription, model_id, parameters, result, last_error=None):
         log.info ("inference callback %s by %s , result = %s, last_error = %s" % (model_id, subscription, result, last_error if last_error is not None else ''))
-        if result == STATUS_FAIL: 
-            # Inference failed
-            # Do a model update
-            prepare_model(self.config, subscription, model_id, timekey, True)
 
     def train(self, request):
         request_body = json.loads(request.data)
         instance_id = request_body['instance']['instanceId']
         subscription = request.headers.get('apim-subscription-id', 'Official')
-        result, message = self.do_verify(subscription, request_body)
+        result, message = self.do_verify(request_body, Context(subscription, ''))
         if result != STATUS_SUCCESS:
             return make_response(jsonify(dict(instanceId=instance_id, modelId='', result=STATUS_FAIL, message='Verify failed! ' + message, modelState=ModelState.Deleted.name)), 400)
 
@@ -170,13 +168,12 @@ class PluginService():
             model_id = str(uuid.uuid1())
             insert_meta(self.config, subscription, model_id, request_body)
             meta = get_meta(self.config, subscription, model_id)
-            timekey = meta['timekey']
-            asyncio.ensure_future(loop.run_in_executor(executor, self.train_wrapper, subscription, model_id, request_body, timekey, self.train_callback))
+            asyncio.ensure_future(loop.run_in_executor(executor, self.train_wrapper, subscription, model_id, request_body, self.train_callback))
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_SUCCESS, message='Training task created', modelState=ModelState.Training.name)), 201)
         except Exception as e: 
             meta = get_meta(self.config, subscription, model_id)
             error_message = str(e) + '\n' + traceback.format_exc()
-            if meta is not None and meta['timekey'] == timekey: 
+            if meta is not None: 
                 update_state(self.config, subscription, model_id, ModelState.Failed, None, error_message)
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Fail to create new task ' + error_message, modelState=ModelState.Failed.name)), 400)
 
@@ -184,7 +181,7 @@ class PluginService():
         request_body = json.loads(request.data)
         instance_id = request_body['instance']['instanceId']
         subscription = request.headers.get('apim-subscription-id', 'Official')
-        result, message = self.do_verify(subscription, request_body)
+        result, message = self.do_verify(request_body, Context(subscription, model_id))
         if result != STATUS_SUCCESS:
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Verify failed! ' + message, modelState=ModelState.Failed.name)), 400)
 
@@ -205,8 +202,7 @@ class PluginService():
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Inconsistent series sets or params!', modelState=meta['state'])), 400)
 
         log.info('Create inference task')
-        timekey = meta['timekey']
-        asyncio.ensure_future(loop.run_in_executor(executor, self.inference_wrapper, subscription, model_id, request_body, timekey, self.inference_callback))
+        asyncio.ensure_future(loop.run_in_executor(executor, self.inference_wrapper, subscription, model_id, request_body, self.inference_callback))
         return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_SUCCESS, message='Inference task created', modelState=meta['state'])), 201)
 
     def state(self, request, model_id):
@@ -229,7 +225,7 @@ class PluginService():
     def delete(self, request, model_id):
         try:
             subscription = request.headers.get('apim-subscription-id', 'Official')
-            result, message = self.do_delete(subscription, model_id)
+            result, message = self.do_delete(Context(subscription, model_id))
             if result == STATUS_SUCCESS:
                 update_state(self.config, subscription, model_id, ModelState.Deleted)
                 return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_SUCCESS, message='Model {} has been deleted'.format(model_id), modelState=ModelState.Deleted.name)), 200)
@@ -243,7 +239,7 @@ class PluginService():
         request_body = json.loads(request.data)
         instance_id = request_body['instance']['instanceId']
         subscription = request.headers.get('apim-subscription-id', 'Official')
-        result, message = self.do_verify(subscription, request_body)
+        result, message = self.do_verify(request_body, Context(subscription, ''))
         if result != STATUS_SUCCESS:
             return make_response(jsonify(dict(instanceId=instance_id, modelId='', result=STATUS_FAIL, message='Verify failed! ' + message, modelState=ModelState.Deleted.name)), 400)
         else:

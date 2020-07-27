@@ -8,7 +8,7 @@ class DemoService(PluginService):
     def __init__(self):
         super().__init__()
 
-    def do_verify(self, subscription, parameters):
+    def do_verify(self, parameters, context):
         # Check series set permission
         for data in parameters['seriesSets']:
             meta = self.tsanaclient.get_metric_meta(parameters['apiEndpoint'], parameters['apiKey'], data['metricId'])
@@ -18,7 +18,7 @@ class DemoService(PluginService):
 
         return STATUS_SUCCESS, ''
 
-    def do_inference(self, subscription, model_id, model_dir, parameters):
+    def do_inference(self, model_dir, parameters, context):
         log.info('Start to inference {}'.format('Demo'))
         try:
             amplifier = parameters['instance']['params']['amplifier']

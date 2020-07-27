@@ -11,6 +11,7 @@ import logging
 import shutil
 import zipfile
 import json
+import uuid
 
 from .azureblob import AzureBlob
 from .azuretable import AzureTable
@@ -19,114 +20,80 @@ from .constant import TIMESTAMP, VALUE
 from .constant import STATUS_SUCCESS, STATUS_FAIL
 
 # Copy the model file to local prd directory, zip and upload to AzureBlob
-# The training output and prd directory is calculated by config with subscription/model_key
+# The training output and prd directory is calculated by config with subscription/model_id
 # Parameters:
-#   config: a dict object which should include MODEL_TMP_DIR, TSANA_APP_NAME, AZ_BLOB_CONNECTION
+#   config: a dict object which should include MODEL_TMP_DIR, TSANA_APP_NAME
 #   subscription: the name of the user
-#   model_key: UUID for the model
+#   model_id: UUID for the model
 # Return:
 #   result: STATE_SUCCESS / STATE_FAIL
 #   message: description of the result
-def copy_tree_and_zip_and_update_remote(config, subscription, model_key, timekey):
+def upload_model(config, subscription, model_id, model_dir):
     try:
-        src = os.path.join(config.model_temp_dir, subscription + '_' + model_key + '_' + str(timekey))
-        dest = model_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_key)
-        os.makedirs(dest, exist_ok=True)
-        
-        zip_file = os.path.join(dest, "model.zip")
-        with zipfile.ZipFile(zip_file, "w") as zf:
-            src_files = os.listdir(src)
-            tkfile = os.path.join(dest, "timekey.txt")
-            with open(tkfile, 'w') as timekey_file:
-                timekey_file.write(str(timekey))
+        zip_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_id + '_' + str(uuid.uuid1()))
+        os.makedirs(zip_dir, exist_ok=True)
 
-            file_exist = False
+        zip_file = os.path.join(zip_dir, "model.zip")
+        with zipfile.ZipFile(zip_file, "w") as zf:
+            src_files = os.listdir(model_dir)
             for file_name in src_files:
-                full_file_name = os.path.join(src, file_name)
-                if os.path.isfile(full_file_name):
-                    shutil.copy(full_file_name, dest)
-                    full_dest_name = os.path.join(dest, file_name)
-                    zf.write(full_dest_name, basename(full_dest_name))
+                full_file = os.path.join(model_dir, file_name)
+                if os.path.isfile(full_file):
+                    zf.write(full_file, basename(full_file))
                 else: 
-                    dest_full = os.path.join(dest, file_name)
-                    shutil.rmtree(dest_full, ignore_errors = True)
-                    shutil.copytree(full_file_name, dest_full)
-                    for root, dirs, files in os.walk(dest_full):
-                        #NOTE: ignore empty directories
+                    full_subdir = os.path.join(model_dir, file_name)
+                    for root, dirs, files in os.walk(full_subdir):
                         for fn in files:
                             absfn = os.path.join(root, fn)
                             print(absfn)
-                            zfn = absfn[len(dest)+len(os.sep):]
+                            zfn = absfn[len(model_dir)+len(os.sep):]
                             zf.write(absfn, zfn)
-                    # zf.write(full_file_name, basename(full_file_name))
-
-            file_exist = True
-            zf.write(tkfile, basename(tkfile))
             zf.close()
 
-        if file_exist is True:
-            container_name = config.tsana_app_name
-            azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
-            azure_blob.create_container(container_name)
+        container_name = config.tsana_app_name
+        azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
+        azure_blob.create_container(container_name)
 
-            with open(zip_file, "rb") as data:
-                azure_blob.upload_blob(container_name, subscription + '_' + model_key, data)
-            return STATUS_SUCCESS, ''
-        else:
-            shutil.rmtree(tkfile, ignore_errors = True)
-            shutil.rmtree(zip_file, ignore_errors = True)
-            return STATUS_FAIL, 'No model file is found! '
+        with open(zip_file, "rb") as data:
+            azure_blob.upload_blob(container_name, subscription + '_' + model_id, data)
+        return STATUS_SUCCESS, ''
     except Exception as e:
-        shutil.rmtree(tkfile, ignore_errors = True)
-        shutil.rmtree(zip_file, ignore_errors = True)
-        
         return STATUS_FAIL, str(e)
-
+    finally:
+        shutil.rmtree(zip_dir, ignore_errors=True)
 
 # Check if local prd directory contains up-to-date model, otherwise, try to download from blob
 # Parameters:
-#   config: a dict object which should include MODEL_TMP_DIR, TSANA_APP_NAME, AZ_BLOB_CONNECTION
+#   config: a dict object which should include MODEL_TMP_DIR, TSANA_APP_NAME
 #   subscription: the name of the user
-#   model_key: UUID for the model
+#   model_id: UUID for the model
 # Return:
 #   result: STATE_SUCCESS / STATE_FAIL
 #   message: description of the result
-
-def prepare_model(config, subscription, model_key, timekey, force = False): 
-    prd_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_key)
-    tkfile = os.path.join(prd_dir, "timekey.txt")
-    tk = ''
+def download_model(config, subscription, model_id, model_dir): 
     try: 
-        try: 
-            with open(tkfile, 'r') as tk_file: 
-                tk = tk_file.read()
-        except:
-            raise Exception("No timekey file is found.")
+        zip_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_id + '_'  + str(uuid.uuid1()))
+        os.makedirs(zip_dir, exist_ok=True)
 
-        if tk == str(timekey) and force is not True: 
-            # up to data
+        # download from blob
+        container_name = config.tsana_app_name
+        azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
+        azure_blob.create_container(container_name)
+        model_name = subscription + '_' + model_id
+        
+        if model_name in azure_blob.list_blob(container_name):
+            zip_file = os.path.join(zip_dir, "model.zip")
+            azure_blob.download_blob(container_name, model_name, zip_file)
+            with zipfile.ZipFile(zip_file) as zf:
+                shutil.rmtree(model_dir, ignore_errors=True)
+                os.makedirs(model_dir, exist_ok=True)
+                zf.extractall(path=model_dir)
+                zf.close()
             return STATUS_SUCCESS, ''
-        else: 
-            # download from blob
-            container_name = config.tsana_app_name
-            azure_blob = AzureBlob(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
-            azure_blob.create_container(container_name)
-            model_name = subscription + '_' + model_key
-            try:
-                shutil.rmtree(prd_dir)
-            except: 
-                pass
-            os.makedirs(prd_dir, exist_ok=True)
-            namelist = azure_blob.list_blob(container_name)
-            if model_name in azure_blob.list_blob(container_name):
-                zip_file = os.path.join(prd_dir, "model.zip")
-                azure_blob.download_blob(container_name, model_name, zip_file)
-                with zipfile.ZipFile(zip_file) as zf:
-                    zf.extractall(path = prd_dir)
-                    zf.close()
-                return STATUS_SUCCESS, ''
-            else:
-                return STATUS_FAIL, 'There is no valid model'         
-    except Exception as e: 
+        else:
+            return STATUS_FAIL, 'There is no valid model'        
+    except Exception as e:
         return STATUS_FAIL, str(e)
-
+    finally:
+        shutil.rmtree(zip_dir, ignore_errors=True)
+        
