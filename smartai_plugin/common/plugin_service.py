@@ -78,7 +78,7 @@ class PluginService():
     def do_inference(self, model_dir, parameters, context:Context):
         return STATUS_SUCCESS, ''
 
-    def do_delete(self, context:Context):
+    def do_delete(self, subscription, model_id):
         return STATUS_SUCCESS, ''
         
     def train_wrapper(self, subscription, model_id, parameters, callback):
@@ -225,7 +225,7 @@ class PluginService():
     def delete(self, request, model_id):
         try:
             subscription = request.headers.get('apim-subscription-id', 'Official')
-            result, message = self.do_delete(Context(subscription, model_id))
+            result, message = self.do_delete(subscription, model_id)
             if result == STATUS_SUCCESS:
                 update_state(self.config, subscription, model_id, ModelState.Deleted)
                 return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_SUCCESS, message='Model {} has been deleted'.format(model_id), modelState=ModelState.Deleted.name)), 200)
