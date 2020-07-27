@@ -96,7 +96,7 @@ class PluginService():
         except Exception as e:
             error_message = str(e) + '\n' + traceback.format_exc()
             if callback is not None:
-                callback(subscription, model_id, model_dir, parameters, ModelState.Failed, error_message)
+                callback(subscription, model_id, None, parameters, ModelState.Failed, error_message)
         finally:
             shutil.rmtree(model_dir, ignore_errors=True)
         return STATUS_SUCCESS, ''
