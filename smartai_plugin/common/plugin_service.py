@@ -117,8 +117,6 @@ class PluginService():
             download_model(self.config, subscription, model_id, model_dir)
             result, message = self.do_inference(model_dir, parameters, Context(subscription, model_id))
 
-            # TODO: Write the result back
-            log.info("Inference result here: %s" % result)
             if callback is not None:
                 callback(subscription, model_id, parameters, result, message)
         except Exception as e:
