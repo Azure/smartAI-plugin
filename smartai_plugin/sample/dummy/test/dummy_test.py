@@ -29,6 +29,8 @@ if __name__ == '__main__':
         }, \
         "startTime":"2020-03-18T00:00:00Z","endTime":"2020-04-18T00:00:00Z","apiKey":"3517cf61-065d-40e9-8ed4-eda58147982d","apiEndpoint":"https://stock-exp2-api.azurewebsites.net/","fieldsFilter":["IsAnomaly"]}'
     
-    response = client.post('/dummy/models/train', data=request_json)
+    #response = client.post('/dummy/models/train', data=request_json)
+
+    response = client.get('/dummy/models')
     
     

@@ -87,15 +87,16 @@ def get_model_list(config, subscription):
     entities = azure_table.get_entities(config.az_tsana_meta_table, subscription)
     
     for entity in entities.items:
-        models.append(dict(modelId=entity['RowKey'],
-            groupId=entity['group_id'],
-            appId=entity['app_id'],
-            appName=entity['app_name'],
-            instanceName=entity['inst_name'],
-            instanceId=entity['inst_id'],
-            state=entity['state'] if 'state' in entity else '',
-            ctime=entity['ctime'] if 'ctime' in entity else '',
-            mtime=entity['mtime'] if 'mtime' in entity else ''))
+        if 'RowKey' in entity and entity['RowKey']:
+            models.append(dict(modelId=entity['RowKey'],
+                groupId=entity['group_id'],
+                appId=entity['app_id'],
+                appName=entity['app_name'],
+                instanceName=entity['inst_name'],
+                instanceId=entity['inst_id'],
+                state=entity['state'] if 'state' in entity else '',
+                ctime=entity['ctime'] if 'ctime' in entity else '',
+                mtime=entity['mtime'] if 'mtime' in entity else ''))
     return models
 
 # Make sure there is no a dead process is owning the training
