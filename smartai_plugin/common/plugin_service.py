@@ -84,7 +84,7 @@ class PluginService():
     def train_wrapper(self, subscription, model_id, parameters, callback):
         log.info("Start train wrapper for model %s by %s " % (model_id, subscription))
         try:
-            model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_'  + str(uuid.uuid1()))
+            model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_' + str(time.time()))
             os.makedirs(model_dir, exist_ok=True)
             result, message = self.do_train(model_dir, parameters, Context(subscription, model_id))
             
@@ -112,7 +112,7 @@ class PluginService():
             results = [{'timestamp': timestamp, 'status': InferenceState.Running.name} for timestamp in self.get_inference_time_range(parameters)]
             self.tsanaclient.save_inference_result(parameters, results)
 
-            model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_'  + str(uuid.uuid1()))
+            model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_' + str(time.time()))
             os.makedirs(model_dir, exist_ok=True)
             download_model(self.config, subscription, model_id, model_dir)
             result, message = self.do_inference(model_dir, parameters, Context(subscription, model_id))
@@ -163,7 +163,7 @@ class PluginService():
 
         log.info('Create training task')
         try:
-            if 'modelId' in request_body:
+            if 'modelId' in request_body and request_body['modelId']:
                 model_id = request_body['modelId']
             else:
                 model_id = str(uuid.uuid1())

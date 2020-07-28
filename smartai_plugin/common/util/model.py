@@ -30,7 +30,7 @@ from .constant import STATUS_SUCCESS, STATUS_FAIL
 #   message: description of the result
 def upload_model(config, subscription, model_id, model_dir):
     try:
-        zip_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_id + '_' + str(uuid.uuid1()))
+        zip_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_id + '_' + str(time.time()))
         os.makedirs(zip_dir, exist_ok=True)
 
         zip_file = os.path.join(zip_dir, "model.zip")
@@ -71,8 +71,8 @@ def upload_model(config, subscription, model_id, model_dir):
 #   result: STATE_SUCCESS / STATE_FAIL
 #   message: description of the result
 def download_model(config, subscription, model_id, model_dir): 
-    try: 
-        zip_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_id + '_'  + str(uuid.uuid1()))
+    try:
+        zip_dir = os.path.join(config.model_temp_dir, subscription + '_' + model_id + '_' + str(time.time()))
         os.makedirs(zip_dir, exist_ok=True)
 
         # download from blob
