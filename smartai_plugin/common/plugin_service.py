@@ -155,8 +155,8 @@ class PluginService():
 
         models_in_train = []
         for model in get_model_list(self.config, subscription):
-            if 'inst_id' in model and model['inst_id'] == request_body['instance']['instanceId'] and model['state'] == ModelState.Training.name:
-                models_in_train.append(model['model_id'])
+            if 'instanceId' in model and model['instanceId'] == request_body['instance']['instanceId'] and model['state'] == ModelState.Training.name:
+                models_in_train.append(model['modelId'])
 
         if len(models_in_train) >= self.config.models_in_training_limit_per_instance:
             return make_response(jsonify(dict(instanceId=instance_id, modelId='', result=STATUS_FAIL, message='Models in training limit reached! Abort training this time.', modelState=ModelState.Deleted.name)), 400)
@@ -193,11 +193,11 @@ class PluginService():
         if meta['state'] != ModelState.Ready.name:
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Cannot do inference right now, status is ' + meta['state'], modelState=meta['state'])), 400)
 
-        current_set = meta['series_set']
-        current_para = meta['para']
+        current_set = json.dumps(json.loads(meta['series_set'].replace("\'", "\"")), sort_keys=True)
+        current_para = json.dumps(json.loads(meta['para'].replace("\'", "\"")), sort_keys=True)
 
-        new_set = str(request_body['seriesSets'])
-        new_para = str(request_body['instance']['params'])
+        new_set = json.dumps(request_body['seriesSets'], sort_keys=True)
+        new_para = json.dumps(request_body['instance']['params'], sort_keys=True)
 
         if current_set != new_set or current_para != new_para:
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Inconsistent series sets or params!', modelState=meta['state'])), 400)
@@ -214,7 +214,7 @@ class PluginService():
                 return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_FAIL, message='Model is not found!', modelState=ModelState.Deleted.name)), 400)
 
             meta = clear_state_when_necessary(self.config, subscription, model_id, meta)
-            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_SUCCESS, message='', modelState=meta['state'])), 200)
+            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_SUCCESS, message=meta['last_error'] if 'last_error' in meta else '', modelState=meta['state'])), 200)
         except Exception as e:
             error_message = str(e) + '\n' + traceback.format_exc()
             return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_FAIL, message=error_message, modelState=ModelState.Failed.name)), 400)

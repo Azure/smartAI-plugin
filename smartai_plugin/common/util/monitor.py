@@ -1,5 +1,6 @@
 import time
 import logging
+import uuid
 from os import environ
 
 from .azureblob import AzureBlob
@@ -7,7 +8,7 @@ from .azuretable import AzureTable
 
 from telemetry import log
 
-thumbprint = str(time.time())
+thumbprint = str(uuid.uuid1())
 
 def init_monitor(config): 
     azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))

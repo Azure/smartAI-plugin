@@ -1,6 +1,7 @@
 import os
 import sys
 from os import environ
+import time
 
 #sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir))
 
@@ -30,7 +31,11 @@ if __name__ == '__main__':
         "startTime":"2020-03-18T00:00:00Z","endTime":"2020-04-18T00:00:00Z","apiKey":"3517cf61-065d-40e9-8ed4-eda58147982d","apiEndpoint":"https://stock-exp2-api.azurewebsites.net/","fieldsFilter":["IsAnomaly"]}'
     
     #response = client.post('/dummy/models/train', data=request_json)
-
+    #time.sleep(10)
+    #response = client.post('/dummy/models/train', data=request_json)
+    response = client.post('/dummy/models/b06f99c6-d186-11ea-a12e-000d3af88183/inference', data=request_json)
+    response = client.get('/dummy/models/b06f99c6-d186-11ea-a12e-000d3af88183')
     response = client.get('/dummy/models')
+    time.sleep(10)
     
     
