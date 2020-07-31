@@ -101,7 +101,7 @@ class PluginService():
             shutil.rmtree(model_dir, ignore_errors=True)
         return STATUS_SUCCESS, ''
 
-    def get_inference_time_range(self, parameters):
+    def get_inference_time_list(self, parameters):
         return []
 
     # inference_window: 30
@@ -109,7 +109,7 @@ class PluginService():
     def inference_wrapper(self, subscription, model_id, parameters, callback): 
         log.info("Start inference wrapper %s by %s " % (model_id, subscription))
         try:
-            results = [{'timestamp': timestamp, 'status': InferenceState.Running.name} for timestamp in self.get_inference_time_range(parameters)]
+            results = [{'timestamp': timestamp, 'status': InferenceState.Running.name} for timestamp in self.get_inference_time_list(parameters)]
             self.tsanaclient.save_inference_result(parameters, results)
 
             model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_' + str(time.time()))

@@ -15,7 +15,7 @@ with open("smartai_plugin/README.md", "r") as fh:
 
 setup(
     name="smartai_plugin",
-    version="0.0.30",
+    version="0.0.31",
     keywords = ("pip", "timeseries", "plugin"),
     description = "Time series analysis plugin",
     long_description = "An plugin package for time series analysis, 3rd parties could implement their own train/inference.",

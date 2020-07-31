@@ -1,6 +1,9 @@
+## [0.0.31] - 2020-07-31
+- Change get_inference_time_range to get_inference_time_list as it may cause confusion.
+
 ## [0.0.30] - 2020-07-31
 - Add trigger alert api.
-- 
+
 ## [0.0.29] - 2020-07-29
 - Compare params and series set with different order.
 - Set owner for model and set state to fail if owner is dead.
