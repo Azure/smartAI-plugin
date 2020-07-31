@@ -293,3 +293,32 @@ class TSANAClient(object):
             return STATUS_SUCCESS, '', ret
         except Exception as e:
             return STATUS_FAIL, str(e), None
+
+    # Trigger alert to TSANA
+    # Parameters: 
+    #   parameters: a dict object which should includes
+    #       apiEndpoint: api endpoint for specific user
+    #       apiKey: api key for specific user
+    #       groupId: groupId in TSANA, which is copied from inference request, or from the entity
+    #       instance: instance object, which is copied from the inference request, or from the entity
+    #   result: an array of alert result.
+    # Return:
+    #   result: STATE_SUCCESS / STATE_FAIL
+    #   messagee: description for the result 
+    def trigger_alert(self, parameters, result):
+        try: 
+            if len(result) <= 0: 
+                return STATUS_SUCCESS, ''
+
+            for item in result:
+                body = {
+                'groupId': parameters['groupId'], 
+                'instanceId': parameters['instance']['instanceId'], 
+                'startTime': item['start_time'],
+                'endTime': item['end_time']
+                }
+
+                self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/alert', body)
+            return STATUS_SUCCESS, ''
+        except Exception as e:
+            return STATUS_FAIL, str(e)

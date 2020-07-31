@@ -2,6 +2,7 @@ import os
 import json
 from flask import jsonify, make_response
 import uuid
+import time
 from common.plugin_service import PluginService
 from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
 
@@ -15,4 +16,6 @@ class DummyPluginService(PluginService):
         os.makedirs(sub_dir, exist_ok=True)
         with open(os.path.join(sub_dir, 'test_model.txt'), 'w') as text_file:
             text_file.write('test')
+        
+        time.sleep(2)
         return STATUS_SUCCESS, ''

@@ -24,12 +24,15 @@ def insert_meta(config, subscription, model_id, meta):
             inst_id=meta['instance']['instanceId'], 
             para=str(meta['instance']['params']),
             state=ModelState.Training.name,
+            context='',
+            last_error='',
             ctime=time.time(),
-            mtime=time.time())
+            mtime=time.time(),
+            owner=thumbprint)
 
 # Get a model entity from meta
 # Parameters: 
-#   config: a dict object which should include AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY, AZ_META_TABLE
+#   config: a dict object which should include AZ_META_TABLE, AZ_MONITOR_TABLE, TSANA_APP_NAME, TRAINING_OWNER_LIFE
 #   subscription: a subscription is a name to differenciate a user, could be used for Authorization
 #   model_id: The UUID for the model created
 # Return: 
@@ -48,27 +51,29 @@ def get_meta(config, subscription, model_id):
 
 # Update a model entity
 # Parameters: 
-#   config: a dict object which should include AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY, THUMBPRINT, AZ_META_TABLE
+#   config: a dict object which should include AZ_META_TABLE, AZ_MONITOR_TABLE, TSANA_APP_NAME, TRAINING_OWNER_LIFE
 #   subscription: a subscription is a name to differenciate a user, could be used for Authorization
 #   model_id: The UUID for the model created
 #   state: model state
 # Return:
 #   result: STATUS_SUCCESS / STATUS_FAIL
 #   message: description for the result 
-def update_state(config, subscription, model_id, state:ModelState=None, context:str=None, last_error:str=None): 
+def update_state(config, subscription, model_id, state:ModelState=None, context:str=None, last_error:str=None):
     azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
     meta = get_meta(config, subscription, model_id)
     if meta == None or meta['state'] == ModelState.Deleted.name:
         return STATUS_FAIL, 'Model is not found!'
 
-    if state is not None:
+    if state:
         meta['state'] = state.name
 
-    if context is not None:
+    if context:
         meta['context'] = context
 
-    if last_error is not None:
+    if last_error:
         meta['last_error'] = last_error
+    else:
+        meta['last_error'] = ''
 
     meta['mtime'] = time.time()
     etag = azure_table.insert_or_replace_entity2(config.az_tsana_meta_table, meta)
@@ -88,6 +93,7 @@ def get_model_list(config, subscription):
     
     for entity in entities.items:
         if 'RowKey' in entity and entity['RowKey']:
+            entity = clear_state_when_necessary(config, subscription, entity['RowKey'], entity)
             models.append(dict(modelId=entity['RowKey'],
                 groupId=entity['group_id'],
                 appId=entity['app_id'],
@@ -96,13 +102,13 @@ def get_model_list(config, subscription):
                 instanceId=entity['inst_id'],
                 state=entity['state'] if 'state' in entity else '',
                 ctime=entity['ctime'] if 'ctime' in entity else '',
-                mtime=entity['mtime'] if 'mtime' in entity else ''))
+                mtime=entity['mtime'] if 'mtime' in entity else '',
+                owner=entity['owner'] if 'owner' in entity else ''))
     return models
 
 # Make sure there is no a dead process is owning the training
 # Parameters: 
-#   config: a dict object which should include AZ_STORAGE_ACCOUNT, AZ_STORAGE_ACCOUNT_KEY, THUMBPRINT, 
-#           AZ_META_TABLE, AZ_MONITOR_TABLE, TSANA_APP_NAME, TRAINING_OWNER_LIFE
+#   config: a dict object which should include AZ_META_TABLE, AZ_MONITOR_TABLE, TSANA_APP_NAME, TRAINING_OWNER_LIFE
 #   subscription: a subscription is a name to differenciate a user, could be used for Authorization
 #   model_id: The UUID for the model created
 #   entity: model entity
@@ -115,17 +121,23 @@ def clear_state_when_necessary(config, subscription, model_id, entity):
             return entity
         
         # Find the training owner in the monitor table and make sure it is alive
-        try: 
-            monitor_entity = azure_table.get_entity(config.az_tsana_moniter_table, config.tsana_app_name, thumbprint)
-        except: 
+        if 'owner' in entity and entity['owner']:
+            try: 
+                monitor_entity = azure_table.get_entity(config.az_tsana_moniter_table, config.tsana_app_name, entity['owner'])
+            except:
+                monitor_entity = None
+        else:
             monitor_entity = None
-        
+
         now = time.time()
         # Problem is server time sync
         if monitor_entity is None or (now - float(monitor_entity['ping']) > config.training_owner_life): 
             # The owner is dead, then
             # Fix the state
-            entity['state'] = ModelState.Failed.name
-            update_state(config, subscription, model_id, ModelState.Failed, None, 'Training job dead')
+            state = ModelState.Failed
+            last_error = 'Training job dead.'
+            entity['state'] = state.name
+            entity['last_error'] = last_error
+            update_state(config, subscription, model_id, state, None, last_error)
                 
     return entity
