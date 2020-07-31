@@ -169,6 +169,19 @@ class TSANAClient(object):
 
         return multi_series_data
 
+    # Get ranked dimensions
+    # Parameters:
+    #   api_endpoint: api endpoint for specific user
+    #   api_key: api key for specific user
+    #   metric_id: uuid for metric
+    #   dimensions: included dimensions
+    #   start_time: inclusive, the first timestamp to be query
+    #   top: max count for returned results
+    def rank_series(self, api_endpoint, api_key, metric_id, dimensions, start_time, top=10):
+        url = f'/metrics/{metric_id}/rank-series'
+        para = dict(dimensions=dimensions, count=top, startTime=start_time)
+        return self.post(api_endpoint, api_key, url, data=para)
+
     # Save a training result back to TSANA
     # Parameters: 
     #   parameters: a dict object which should includes
@@ -205,7 +218,7 @@ class TSANAClient(object):
     #   result: an array of inference result. 
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
-    #   messagee: description for the result 
+    #   message: description for the result
     def save_inference_result(self, parameters, result, batch_size=1000):
         try: 
 
