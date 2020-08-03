@@ -1,3 +1,6 @@
+## [0.0.32] - 2020-08-03
+- Fix date time json serialize issue for trigger_alert.
+
 ## [0.0.31] - 2020-07-31
 - Change get_inference_time_range to get_inference_time_list as it may cause confusion.
 

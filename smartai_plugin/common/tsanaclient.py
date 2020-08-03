@@ -314,8 +314,8 @@ class TSANAClient(object):
                 body = {
                 'groupId': parameters['groupId'], 
                 'instanceId': parameters['instance']['instanceId'], 
-                'startTime': item['start_time'],
-                'endTime': item['end_time']
+                'startTime': dt_to_str(item['start_time']),
+                'endTime': dt_to_str(item['end_time'])
                 }
 
                 self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/alert', body)
