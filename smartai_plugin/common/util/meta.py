@@ -1,5 +1,6 @@
 import time
 from os import environ
+import json
 
 from .azureblob import AzureBlob
 from .azuretable import AzureTable
@@ -19,10 +20,10 @@ def insert_meta(config, subscription, model_id, meta):
             group_id=meta['groupId'], 
             app_id=meta['instance']['appId'], 
             app_name=meta['instance']['appName'], 
-            series_set=str(meta['seriesSets']), 
+            series_set=json.dumps(meta['seriesSets']), 
             inst_name=meta['instance']['instanceName'], 
             inst_id=meta['instance']['instanceId'], 
-            para=str(meta['instance']['params']),
+            para=json.dumps(meta['instance']['params']),
             state=ModelState.Training.name,
             context='',
             last_error='',

@@ -1,6 +1,9 @@
+## [0.0.34] - 2020-08-03
+- Fix meta deserialize issue caused by str when storage meta, such as " to ' and 'true' to 'True'.
+
 ## [0.0.33] - 2020-08-03
 - Fix null state issue for clear_state_when_necessary.
-- 
+
 ## [0.0.32] - 2020-08-03
 - Fix date time json serialize issue for trigger_alert.
 

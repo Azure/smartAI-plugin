@@ -193,8 +193,8 @@ class PluginService():
         if meta['state'] != ModelState.Ready.name:
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Cannot do inference right now, status is ' + meta['state'], modelState=meta['state'])), 400)
 
-        current_set = json.dumps(json.loads(meta['series_set'].replace("\'", "\"")), sort_keys=True)
-        current_para = json.dumps(json.loads(meta['para'].replace("\'", "\"")), sort_keys=True)
+        current_set = json.dumps(json.loads(meta['series_set']), sort_keys=True)
+        current_para = json.dumps(json.loads(meta['para']), sort_keys=True)
 
         new_set = json.dumps(request_body['seriesSets'], sort_keys=True)
         new_para = json.dumps(request_body['instance']['params'], sort_keys=True)
