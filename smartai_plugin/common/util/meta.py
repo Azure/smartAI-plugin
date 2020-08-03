@@ -115,7 +115,7 @@ def get_model_list(config, subscription):
 # Return:
 #   entity: a entity with a correct state
 def clear_state_when_necessary(config, subscription, model_id, entity):
-    if entity['state'] == ModelState.Training.name:
+    if 'state' in entity and entity['state'] == ModelState.Training.name:
         azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
         if not azure_table.exists_table(config.az_tsana_moniter_table):
             return entity
