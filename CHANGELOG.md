@@ -1,3 +1,6 @@
+## [0.0.35] - 2020-08-05
+- Update alert schema.
+
 ## [0.0.34] - 2020-08-03
 - Fix meta deserialize issue caused by str when storage meta, such as " to ' and 'true' to 'True'.
 

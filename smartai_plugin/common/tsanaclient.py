@@ -310,15 +310,15 @@ class TSANAClient(object):
             if len(result) <= 0: 
                 return STATUS_SUCCESS, ''
 
-            for item in result:
-                body = {
-                'groupId': parameters['groupId'], 
-                'instanceId': parameters['instance']['instanceId'], 
-                'startTime': dt_to_str(item['start_time']),
-                'endTime': dt_to_str(item['end_time'])
-                }
+            body = {
+                'groupId': parameters['groupId'],
+                'instanceId': parameters['instance']['instanceId'],
+                'params': parameters['instance']['params'],
+                'results': result,
+            }
 
-                self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/alert', body)
+            self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/alert', body)
+                
             return STATUS_SUCCESS, ''
         except Exception as e:
             return STATUS_FAIL, str(e)
