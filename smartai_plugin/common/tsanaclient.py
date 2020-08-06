@@ -1,17 +1,13 @@
 import json
-import datetime
-import sys
 import math
 
-from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
-from .util.series import Series
-from .util.retryrequests import RetryRequests
 from .util.constant import STATUS_SUCCESS, STATUS_FAIL
-from .util.constant import InferenceState
-
-from telemetry import log
+from .util.retryrequests import RetryRequests
+from .util.series import Series
+from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
 
 REQUEST_TIMEOUT_SECONDS = 30
+
 
 def get_field_idx(fields, target):
     for idx, field in enumerate(fields):
@@ -19,6 +15,7 @@ def get_field_idx(fields, target):
             return idx
 
     raise Exception("Not found field {} in {}".format(target, ','.join(fields)))
+
 
 class TSANAClient(object):
     def __init__(self, series_limit, username=None, password=None, retrycount=3, retryinterval=1000):
@@ -177,6 +174,8 @@ class TSANAClient(object):
     #   dimensions: included dimensions
     #   start_time: inclusive, the first timestamp to be query
     #   top: max count for returned results
+    # Return:
+    #   ranked series dimensions
     def rank_series(self, api_endpoint, api_key, metric_id, dimensions, start_time, top=10):
         url = f'/metrics/{metric_id}/rank-series'
         para = dict(dimensions=dimensions, count=top, startTime=start_time)
@@ -322,3 +321,21 @@ class TSANAClient(object):
             return STATUS_SUCCESS, ''
         except Exception as e:
             return STATUS_FAIL, str(e)
+
+    # Push alert with any type
+    # Parameters:
+    #   api_endpoint: api endpoint for specific user
+    #   api_key: api key for specific user
+    #   alert_type: alert type
+    #   message: alert message
+    # Return:
+    #   result: STATE_SUCCESS / STATE_FAIL
+    #   messagee: description for the result
+    def push_alert(self, api_endpoint, api_key, alert_type, message):
+        try:
+            url = '/alert/push'
+            para = dict(alertType=alert_type, message=message)
+            self.post(api_endpoint, api_key, url, data=para)
+            return STATUS_SUCCESS, ''
+        except Exception as e:
+            return STATUS_FAIL, repr(e)
