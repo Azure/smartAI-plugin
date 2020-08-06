@@ -333,7 +333,7 @@ class TSANAClient(object):
     #   message: description for the result
     def push_alert(self, api_endpoint, api_key, alert_type, message):
         try:
-            url = '/alert/push'
+            url = '/timeSeriesGroups/alert'
             para = dict(alertType=alert_type, message=message)
             self.post(api_endpoint, api_key, url, data=para)
             return STATUS_SUCCESS, ''
