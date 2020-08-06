@@ -258,7 +258,7 @@ class TSANAClient(object):
     #   values: an array of inference result values
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
-    #   messagee: description for the result 
+    #   message: description for the result
     def save_data_points(self, parameters, metricId, dimensions, timestamps, values):
         try: 
             if len(values) <= 0: 
@@ -303,7 +303,7 @@ class TSANAClient(object):
     #   result: an array of alert result.
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
-    #   messagee: description for the result 
+    #   message: description for the result
     def trigger_alert(self, parameters, result):
         try: 
             if len(result) <= 0: 
@@ -322,7 +322,7 @@ class TSANAClient(object):
         except Exception as e:
             return STATUS_FAIL, str(e)
 
-    # Push alert with any type
+    # Push alert in general way
     # Parameters:
     #   api_endpoint: api endpoint for specific user
     #   api_key: api key for specific user
@@ -330,7 +330,7 @@ class TSANAClient(object):
     #   message: alert message
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
-    #   messagee: description for the result
+    #   message: description for the result
     def push_alert(self, api_endpoint, api_key, alert_type, message):
         try:
             url = '/alert/push'
