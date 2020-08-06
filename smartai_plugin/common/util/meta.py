@@ -1,5 +1,6 @@
 import time
 from os import environ
+import json
 
 from .azureblob import AzureBlob
 from .azuretable import AzureTable
@@ -19,10 +20,10 @@ def insert_meta(config, subscription, model_id, meta):
             group_id=meta['groupId'], 
             app_id=meta['instance']['appId'], 
             app_name=meta['instance']['appName'], 
-            series_set=str(meta['seriesSets']), 
+            series_set=json.dumps(meta['seriesSets']), 
             inst_name=meta['instance']['instanceName'], 
             inst_id=meta['instance']['instanceId'], 
-            para=str(meta['instance']['params']),
+            para=json.dumps(meta['instance']['params']),
             state=ModelState.Training.name,
             context='',
             last_error='',
@@ -115,7 +116,7 @@ def get_model_list(config, subscription):
 # Return:
 #   entity: a entity with a correct state
 def clear_state_when_necessary(config, subscription, model_id, entity):
-    if entity['state'] == ModelState.Training.name:
+    if 'state' in entity and entity['state'] == ModelState.Training.name:
         azure_table = AzureTable(environ.get('AZURE_STORAGE_ACCOUNT'), environ.get('AZURE_STORAGE_ACCOUNT_KEY'))
         if not azure_table.exists_table(config.az_tsana_moniter_table):
             return entity
