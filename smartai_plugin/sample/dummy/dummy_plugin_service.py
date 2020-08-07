@@ -9,7 +9,7 @@ from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
 class DummyPluginService(PluginService):
 
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
 
     def do_train(self, model_dir, parameters, context):
         sub_dir = os.path.join(model_dir, 'test')

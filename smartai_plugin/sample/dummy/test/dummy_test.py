@@ -34,8 +34,8 @@ if __name__ == '__main__':
     #time.sleep(10)
     #response = client.post('/dummy/models/train', data=request_json)
     response = client.post('/dummy/models/b06f99c6-d186-11ea-a12e-000d3af88183/inference', data=request_json)
-    response = client.get('/dummy/models/b06f99c6-d186-11ea-a12e-000d3af88183')
-    response = client.get('/dummy/models')
-    time.sleep(10)
+    #response = client.get('/dummy/models/b06f99c6-d186-11ea-a12e-000d3af88183')
+    #response = client.get('/dummy/models')
+    time.sleep(1000)
     
     

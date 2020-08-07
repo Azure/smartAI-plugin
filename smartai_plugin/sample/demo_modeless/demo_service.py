@@ -6,7 +6,7 @@ import copy
 
 class DemoService(PluginService):
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
 
     def do_verify(self, parameters, context):
         # Check series set permission

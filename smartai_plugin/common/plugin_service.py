@@ -53,8 +53,9 @@ def load_config(path):
 
 
 class PluginService():
+    def __init__(self, trainable=True):
+        self.trainable = trainable
 
-    def __init__(self):
         config_file = environ.get('SERVICE_CONFIG_FILE')
         config = load_config(config_file)
         if config is None:
@@ -114,7 +115,10 @@ class PluginService():
 
             model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_' + str(time.time()))
             os.makedirs(model_dir, exist_ok=True)
-            download_model(self.config, subscription, model_id, model_dir)
+
+            if self.trainable:
+                download_model(self.config, subscription, model_id, model_dir)
+            
             result, message = self.do_inference(model_dir, parameters, Context(subscription, model_id))
 
             if callback is not None:
@@ -148,6 +152,9 @@ class PluginService():
     def train(self, request):
         request_body = json.loads(request.data)
         instance_id = request_body['instance']['instanceId']
+        if not self.trainable:
+            return make_response(jsonify(dict(instanceId=instance_id, modelId='', result=STATUS_SUCCESS, message='Model is not trainable', modelState=ModelState.Ready.name)), 200)
+
         subscription = request.headers.get('apim-subscription-id', 'Official')
         result, message = self.do_verify(request_body, Context(subscription, ''))
         if result != STATUS_SUCCESS:
@@ -186,27 +193,31 @@ class PluginService():
         if result != STATUS_SUCCESS:
             return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Verify failed! ' + message, modelState=ModelState.Failed.name)), 400)
 
-        meta = get_meta(self.config, subscription, model_id)
-        if meta is None:
-            return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Model is not found!', modelState=ModelState.Deleted.name)), 400)
-            
-        if meta['state'] != ModelState.Ready.name:
-            return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Cannot do inference right now, status is ' + meta['state'], modelState=meta['state'])), 400)
+        if self.trainable:
+            meta = get_meta(self.config, subscription, model_id)
+            if meta is None:
+                return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Model is not found!', modelState=ModelState.Deleted.name)), 400)
+                
+            if meta['state'] != ModelState.Ready.name:
+                return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Cannot do inference right now, status is ' + meta['state'], modelState=meta['state'])), 400)
 
-        current_set = json.dumps(json.loads(meta['series_set']), sort_keys=True)
-        current_para = json.dumps(json.loads(meta['para']), sort_keys=True)
+            current_set = json.dumps(json.loads(meta['series_set']), sort_keys=True)
+            current_para = json.dumps(json.loads(meta['para']), sort_keys=True)
 
-        new_set = json.dumps(request_body['seriesSets'], sort_keys=True)
-        new_para = json.dumps(request_body['instance']['params'], sort_keys=True)
+            new_set = json.dumps(request_body['seriesSets'], sort_keys=True)
+            new_para = json.dumps(request_body['instance']['params'], sort_keys=True)
 
-        if current_set != new_set or current_para != new_para:
-            return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Inconsistent series sets or params!', modelState=meta['state'])), 400)
+            if current_set != new_set or current_para != new_para:
+                return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Inconsistent series sets or params!', modelState=meta['state'])), 400)
 
         log.info('Create inference task')
         asyncio.ensure_future(loop.run_in_executor(executor, self.inference_wrapper, subscription, model_id, request_body, self.inference_callback))
-        return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_SUCCESS, message='Inference task created', modelState=meta['state'])), 201)
+        return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_SUCCESS, message='Inference task created', modelState=ModelState.Ready.name)), 201)
 
     def state(self, request, model_id):
+        if not self.trainable:
+            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_SUCCESS, message='Model is not trainable', modelState=ModelState.Ready.name)), 200)
+
         try:
             subscription = request.headers.get('apim-subscription-id', 'Official')
             meta = get_meta(self.config, subscription, model_id)
@@ -224,6 +235,9 @@ class PluginService():
         return make_response(jsonify(get_model_list(self.config, subscription)), 200)
 
     def delete(self, request, model_id):
+        if not self.trainable:
+            return make_response(jsonify(dict(instanceId='', modelId=model_id, result=STATUS_SUCCESS, message='Model is not trainable')), 200)
+
         try:
             subscription = request.headers.get('apim-subscription-id', 'Official')
             result, message = self.do_delete(subscription, model_id)
