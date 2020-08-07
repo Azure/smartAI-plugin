@@ -1,34 +1,27 @@
+import asyncio
+import atexit
 import json
-import time
-from time import gmtime, strftime
 import os
 import shutil
+import time
 import traceback
-from flask import jsonify, make_response
-from collections import namedtuple
 import uuid
+from collections import namedtuple
+from concurrent.futures import ThreadPoolExecutor
+from os import environ
 
-from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
-from .util.meta import insert_meta, get_meta, update_state, get_model_list, clear_state_when_necessary
-from .util.model import upload_model, download_model
-from .util.constant import STATUS_SUCCESS, STATUS_FAIL
-from .util.constant import ModelState
-from .util.constant import InferenceState
-from .util.monitor import init_monitor, run_monitor, stop_monitor
-from .util.context import Context
+import yaml
+from apscheduler.schedulers.background import BackgroundScheduler
+from flask import jsonify, make_response
 
 from .tsanaclient import TSANAClient
-
-import logging
-from telemetry import log
-from os import environ
-import yaml
-
-import atexit
-from apscheduler.schedulers.background import BackgroundScheduler
-
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-import asyncio
+from .util.constant import InferenceState
+from .util.constant import ModelState
+from .util.constant import STATUS_SUCCESS, STATUS_FAIL
+from .util.context import Context
+from .util.meta import insert_meta, get_meta, update_state, get_model_list, clear_state_when_necessary
+from .util.model import upload_model, download_model
+from .util.monitor import init_monitor, run_monitor, stop_monitor
 
 #async infras
 #executor = ProcessPoolExecutor()
