@@ -1,7 +1,10 @@
-## [0.0.36] - 2020-08-07
+## [0.0.37] - 2020-08-07
 - Update alert schema, add start time, end time and gran to request body.
 - Add trainable field for plugin service, do not need training when trainable is false.
 
+## [0.0.36] - 2020-08-06
+- Add push alert api(Zhao Ming).
+  
 ## [0.0.35] - 2020-08-05
 - Update alert schema.
 
