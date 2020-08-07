@@ -301,11 +301,14 @@ class TSANAClient(object):
     #       apiKey: api key for specific user
     #       groupId: groupId in TSANA, which is copied from inference request, or from the entity
     #       instance: instance object, which is copied from the inference request, or from the entity
-    #   result: an array of alert result.
+    #   start_time: alert start time
+    #   end_time: alert end time
+    #   gran: granularity, granularityAmount tuple
+    #   result: an array of alert result
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
     #   messagee: description for the result 
-    def trigger_alert(self, parameters, result):
+    def trigger_alert(self, parameters, start_time, end_time, gran, result):
         try: 
             if len(result) <= 0: 
                 return STATUS_SUCCESS, ''
@@ -314,7 +317,12 @@ class TSANAClient(object):
                 'groupId': parameters['groupId'],
                 'instanceId': parameters['instance']['instanceId'],
                 'params': parameters['instance']['params'],
+                'startTime': start_time,
+                'endTime': end_time,
+                'granularity' : gran[0],
+                'granularityAmount' : gran[1],
                 'results': result,
+                'isResolved': False
             }
 
             self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/alert', body)
