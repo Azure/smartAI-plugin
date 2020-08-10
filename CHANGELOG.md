@@ -1,3 +1,6 @@
+## [0.0.40] - 2020-08-10
+- Convert datetime to str as it is not JSON serializable.
+
 ## [0.0.39] - 2020-08-10
 - Update alert path for tsanaclient.
 
