@@ -1,3 +1,6 @@
+## [0.0.38] - 2020-08-10
+- Do not list blob when download model as it will take too much time.
+
 ## [0.0.37] - 2020-08-07
 - Update alert schema, add start time, end time and gran to request body.
 - Add trainable field for plugin service, do not need training when trainable is false.

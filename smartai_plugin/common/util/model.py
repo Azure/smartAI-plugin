@@ -81,17 +81,13 @@ def download_model(config, subscription, model_id, model_dir):
         azure_blob.create_container(container_name)
         model_name = subscription + '_' + model_id
         
-        if model_name in azure_blob.list_blob(container_name):
-            zip_file = os.path.join(zip_dir, "model.zip")
-            azure_blob.download_blob(container_name, model_name, zip_file)
-            with zipfile.ZipFile(zip_file) as zf:
-                shutil.rmtree(model_dir, ignore_errors=True)
-                os.makedirs(model_dir, exist_ok=True)
-                zf.extractall(path=model_dir)
-                zf.close()
-            return STATUS_SUCCESS, ''
-        else:
-            return STATUS_FAIL, 'There is no valid model'        
+        zip_file = os.path.join(zip_dir, "model.zip")
+        azure_blob.download_blob(container_name, model_name, zip_file)
+        with zipfile.ZipFile(zip_file) as zf:
+            shutil.rmtree(model_dir, ignore_errors=True)
+            os.makedirs(model_dir, exist_ok=True)
+            zf.extractall(path=model_dir)
+        return STATUS_SUCCESS, ''
     except Exception as e:
         return STATUS_FAIL, str(e)
     finally:
