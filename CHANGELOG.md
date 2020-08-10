@@ -1,3 +1,6 @@
+## [0.0.39] - 2020-08-10
+- Update alert path for tsanaclient.
+
 ## [0.0.38] - 2020-08-10
 - Do not list blob when download model as it will take too much time.
 

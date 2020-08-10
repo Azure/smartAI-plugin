@@ -325,7 +325,7 @@ class TSANAClient(object):
                 'isResolved': False
             }
 
-            self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/alert', body)
+            self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/multiADAlert', body)
                 
             return STATUS_SUCCESS, ''
         except Exception as e:
