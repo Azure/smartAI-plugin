@@ -1,17 +1,13 @@
 import json
-import datetime
-import sys
 import math
 
-from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
-from .util.series import Series
-from .util.retryrequests import RetryRequests
 from .util.constant import STATUS_SUCCESS, STATUS_FAIL
-from .util.constant import InferenceState
-
-from telemetry import log
+from .util.retryrequests import RetryRequests
+from .util.series import Series
+from .util.timeutil import get_time_offset, str_to_dt, dt_to_str, get_time_list
 
 REQUEST_TIMEOUT_SECONDS = 30
+
 
 def get_field_idx(fields, target):
     for idx, field in enumerate(fields):
@@ -19,6 +15,7 @@ def get_field_idx(fields, target):
             return idx
 
     raise Exception("Not found field {} in {}".format(target, ','.join(fields)))
+
 
 class TSANAClient(object):
     def __init__(self, series_limit, username=None, password=None, retrycount=3, retryinterval=1000):
@@ -177,6 +174,8 @@ class TSANAClient(object):
     #   dimensions: included dimensions
     #   start_time: inclusive, the first timestamp to be query
     #   top: max count for returned results
+    # Return:
+    #   ranked series dimensions
     def rank_series(self, api_endpoint, api_key, metric_id, dimensions, start_time, top=10):
         url = f'/metrics/{metric_id}/rank-series'
         para = dict(dimensions=dimensions, count=top, startTime=start_time)
@@ -259,7 +258,7 @@ class TSANAClient(object):
     #   values: an array of inference result values
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
-    #   messagee: description for the result 
+    #   message: description for the result
     def save_data_points(self, parameters, metricId, dimensions, timestamps, values):
         try: 
             if len(values) <= 0: 
@@ -278,7 +277,6 @@ class TSANAClient(object):
         except Exception as e:
             return STATUS_FAIL, str(e)
 
-
     def get_inference_result(self, parameters, start_time, end_time):
         try: 
             ret = self.get(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' 
@@ -294,39 +292,20 @@ class TSANAClient(object):
         except Exception as e:
             return STATUS_FAIL, str(e), None
 
-    # Trigger alert to TSANA
-    # Parameters: 
-    #   parameters: a dict object which should includes
-    #       apiEndpoint: api endpoint for specific user
-    #       apiKey: api key for specific user
-    #       groupId: groupId in TSANA, which is copied from inference request, or from the entity
-    #       instance: instance object, which is copied from the inference request, or from the entity
-    #   start_time: alert start time
-    #   end_time: alert end time
-    #   gran: granularity, granularityAmount tuple
-    #   result: an array of alert result
+    # Push alert in general
+    # Parameters:
+    #   api_endpoint: api endpoint for specific user
+    #   api_key: api key for specific user
+    #   alert_type: alert type
+    #   message: alert message
     # Return:
     #   result: STATE_SUCCESS / STATE_FAIL
-    #   messagee: description for the result 
-    def trigger_alert(self, parameters, start_time, end_time, gran, result):
-        try: 
-            if len(result) <= 0: 
-                return STATUS_SUCCESS, ''
-
-            body = {
-                'groupId': parameters['groupId'],
-                'instanceId': parameters['instance']['instanceId'],
-                'params': parameters['instance']['params'],
-                'startTime': dt_to_str(start_time),
-                'endTime': dt_to_str(end_time),
-                'granularity' : gran[0],
-                'granularityAmount' : gran[1],
-                'results': result,
-                'isResolved': False
-            }
-
-            self.post(parameters['apiEndpoint'], parameters['apiKey'], '/timeSeriesGroups/' + parameters['groupId'] + '/appInstances/' + parameters['instance']['instanceId'] + '/multiADAlert', body)
-                
+    #   message: description for the result
+    def push_alert(self, api_endpoint, api_key, alert_type, message):
+        try:
+            url = '/timeSeriesGroups/alert'
+            para = dict(alertType=alert_type, message=message)
+            self.post(api_endpoint, api_key, url, data=para)
             return STATUS_SUCCESS, ''
         except Exception as e:
-            return STATUS_FAIL, str(e)
+            return STATUS_FAIL, repr(e)
