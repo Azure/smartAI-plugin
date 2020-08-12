@@ -66,6 +66,9 @@ class PluginService():
     def do_verify(self, parameters, context:Context):
         return STATUS_SUCCESS, ''
 
+    def need_retrain(self, current_series_set, current_params, new_series_set, new_params, context:Context):
+        return True
+
     def do_train(self, model_dir, parameters, context:Context):
         return STATUS_SUCCESS, ''
 
@@ -74,7 +77,7 @@ class PluginService():
 
     def do_delete(self, subscription, model_id):
         return STATUS_SUCCESS, ''
-        
+
     def train_wrapper(self, subscription, model_id, parameters, callback):
         log.info("Start train wrapper for model %s by %s " % (model_id, subscription))
         try:
@@ -195,13 +198,14 @@ class PluginService():
                 return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Cannot do inference right now, status is ' + meta['state'], modelState=meta['state'])), 400)
 
             current_set = json.dumps(json.loads(meta['series_set']), sort_keys=True)
-            current_para = json.dumps(json.loads(meta['para']), sort_keys=True)
+            current_params = json.dumps(json.loads(meta['para']), sort_keys=True)
 
             new_set = json.dumps(request_body['seriesSets'], sort_keys=True)
-            new_para = json.dumps(request_body['instance']['params'], sort_keys=True)
+            new_params = json.dumps(request_body['instance']['params'], sort_keys=True)
 
-            if current_set != new_set or current_para != new_para:
-                return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Inconsistent series sets or params!', modelState=meta['state'])), 400)
+            if current_set != new_set or current_params != new_params:
+                if self.need_retrain(json.loads(meta['series_set']), json.loads(meta['para']), request_body['seriesSets'], request_body['instance']['params'], Context(subscription, model_id)):
+                    return make_response(jsonify(dict(instanceId=instance_id, modelId=model_id, result=STATUS_FAIL, message='Inconsistent series sets or params!', modelState=meta['state'])), 400)
 
         log.info('Create inference task')
         asyncio.ensure_future(loop.run_in_executor(executor, self.inference_wrapper, subscription, model_id, request_body, self.inference_callback))
