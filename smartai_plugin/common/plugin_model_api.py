@@ -36,9 +36,6 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    total_time = (time.time() - g.start) * 1e6
-    rule = str(request.url_rule)
-    status = str(response.status_code)
     # TODO log here
     request_log = '\nRequest begin-----------------------------'
     request_log += '\n'
@@ -52,6 +49,13 @@ def after_request(response):
     request_log += '\n'
     request_log += 'Request end-----------------------------'
     log.info(request_log)
+
+    total_time = (time.time() - g.start)
+    url_rule = str(request.url_rule)
+    url = str(request.path)
+    status = str(response.status_code)
+    log.duration("tsg_plugin_api_request_duration", total_time, url_rule=url_rule, url=url, response_code=status)
+    log.count("tsg_plugin_api_request_count", 1, url_rule=url_rule, url=url, response_code=status)
     return response
 
 class PluginModelIndexAPI(Resource):

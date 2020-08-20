@@ -1,3 +1,6 @@
+## [0.0.43] - 2020-08-20
+- Add telemetry for request, train_wrapper and inference_wrapper.
+
 ## [0.0.42] - 2020-08-20
 - Save inference error message back to TSANA.
   

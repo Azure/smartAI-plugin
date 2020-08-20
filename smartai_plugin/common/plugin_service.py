@@ -79,6 +79,8 @@ class PluginService():
         return STATUS_SUCCESS, ''
 
     def train_wrapper(self, subscription, model_id, parameters, callback):
+        start = time.time()
+
         log.info("Start train wrapper for model %s by %s " % (model_id, subscription))
         try:
             model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_' + str(time.time()))
@@ -94,8 +96,15 @@ class PluginService():
             error_message = str(e) + '\n' + traceback.format_exc()
             if callback is not None:
                 callback(subscription, model_id, None, parameters, ModelState.Failed, error_message)
+
+            result = STATUS_FAIL
         finally:
             shutil.rmtree(model_dir, ignore_errors=True)
+
+        total_time = (time.time() - start)
+        log.duration("training_task_duration", total_time, model_id=model_id, result=result)
+        log.count("training_task_count", 1,  model_id=model_id, result=result)
+
         return STATUS_SUCCESS, ''
 
     def get_inference_time_list(self, parameters):
@@ -103,7 +112,9 @@ class PluginService():
 
     # inference_window: 30
     # endTime: endtime
-    def inference_wrapper(self, subscription, model_id, parameters, callback): 
+    def inference_wrapper(self, subscription, model_id, parameters, callback):
+        start = time.time()
+
         log.info("Start inference wrapper %s by %s " % (model_id, subscription))
         try:
             model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_' + str(time.time()))
@@ -123,8 +134,15 @@ class PluginService():
 
             if callback is not None:
                 callback(subscription, model_id, parameters, STATUS_FAIL, error_message)
+            
+            result = STATUS_FAIL
         finally:
             shutil.rmtree(model_dir, ignore_errors=True)
+
+        total_time = (time.time() - start)
+        log.duration("inference_task_duration", total_time, model_id=model_id, result=result)
+        log.count("inference_task_count", 1,  model_id=model_id, result=result)
+
         return STATUS_SUCCESS, ''
 
     def train_callback(self, subscription, model_id, model_dir, parameters, model_state, last_error=None):
