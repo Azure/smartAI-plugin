@@ -11,6 +11,9 @@ class DummyPluginService(PluginService):
     def __init__(self):
         super().__init__()
 
+    def need_retrain(self, current_series_set, current_params, new_series_set, new_params, context):
+        return False
+
     def do_train(self, model_dir, parameters, context):
         sub_dir = os.path.join(model_dir, 'test')
         os.makedirs(sub_dir, exist_ok=True)
@@ -19,3 +22,6 @@ class DummyPluginService(PluginService):
         
         time.sleep(2)
         return STATUS_SUCCESS, ''
+
+    def do_inference(self, model_dir, parameters, context):
+        raise Exception('error')

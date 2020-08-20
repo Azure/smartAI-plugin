@@ -99,16 +99,13 @@ class PluginService():
         return STATUS_SUCCESS, ''
 
     def get_inference_time_list(self, parameters):
-        return []
+        return [parameters['startTime'], parameters['endTime']]
 
     # inference_window: 30
     # endTime: endtime
     def inference_wrapper(self, subscription, model_id, parameters, callback): 
         log.info("Start inference wrapper %s by %s " % (model_id, subscription))
         try:
-            results = [{'timestamp': timestamp, 'status': InferenceState.Running.name} for timestamp in self.get_inference_time_list(parameters)]
-            self.tsanaclient.save_inference_result(parameters, results)
-
             model_dir = os.path.join(self.config.model_dir, subscription + '_' + model_id + '_' + str(time.time()))
             os.makedirs(model_dir, exist_ok=True)
 
@@ -121,6 +118,9 @@ class PluginService():
                 callback(subscription, model_id, parameters, result, message)
         except Exception as e:
             error_message = str(e) + '\n' + traceback.format_exc()
+            results = [{'timestamp': timestamp, 'status': InferenceState.Failed.name, 'result': dict(errorMessage=error_message)} for timestamp in self.get_inference_time_list(parameters)]
+            self.tsanaclient.save_inference_result(parameters, results)
+
             if callback is not None:
                 callback(subscription, model_id, parameters, STATUS_FAIL, error_message)
         finally:

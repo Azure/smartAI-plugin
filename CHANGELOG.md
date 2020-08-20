@@ -1,3 +1,6 @@
+## [0.0.42] - 2020-08-20
+- Save inference error message back to TSANA.
+  
 ## [0.0.41] - 2020-08-12
 - Remove trigger_alert for tsanaclient, just keep push_alert.
 - Add need_train interface for plugin custimization when series set or parameters are changed.
