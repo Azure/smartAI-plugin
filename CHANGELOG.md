@@ -1,3 +1,7 @@
+## [0.0.44] - 2020-08-25
+- Add linear regression sample.
+- Fix get_time_list bug when start_time is equal to end_time.
+  
 ## [0.0.43] - 2020-08-20
 - Add telemetry for request, train_wrapper and inference_wrapper.
 
