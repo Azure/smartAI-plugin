@@ -108,7 +108,7 @@ def get_time_list(start_time, end_time, graninfo):
     else:
         raise Exception('Granularity not supported: {}|{}'.format(*graninfo))
 
-    while start_time < end_time:
+    while start_time <= end_time:
         time_list.append(start_time)
         start_time = start_time + timedelta
 
