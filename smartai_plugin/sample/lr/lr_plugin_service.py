@@ -1,8 +1,3 @@
-import os
-import json
-from flask import jsonify, make_response
-import uuid
-import time
 import numpy as np
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
@@ -10,7 +5,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from common.plugin_service import PluginService
 from common.util.constant import InferenceState
 from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
-from common.util.timeutil import dt_to_str, dt_to_str_file_name, str_to_dt, get_time_offset, get_time_list
+from common.util.timeutil import dt_to_str, str_to_dt, get_time_offset, get_time_list
 
 class LrPluginService(PluginService):
 
