@@ -44,6 +44,8 @@ setup(
 		'gunicorn==19.9.0',
 		'gevent==1.4.0',
 		'apscheduler',
+        'numpy==1.17.3',
+        'pandas==0.23.4',
     ],
 	include_package_data=True
 )
