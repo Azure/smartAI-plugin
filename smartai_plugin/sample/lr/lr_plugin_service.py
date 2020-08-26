@@ -6,6 +6,9 @@ from common.plugin_service import PluginService
 from common.util.constant import InferenceState
 from common.util.constant import STATUS_SUCCESS, STATUS_FAIL
 from common.util.timeutil import dt_to_str, str_to_dt, get_time_offset, get_time_list
+from common.util.data import generate_filled_missing_by_field
+from common.util.gran import Gran
+from common.util.fill_type import Fill
 
 class LrPluginService(PluginService):
 
@@ -26,7 +29,7 @@ class LrPluginService(PluginService):
             gran = (metric_meta['granularityName'], metric_meta['granularityAmount'])
             data_end_time = get_time_offset(end_time, gran, + 1)
             trace_back_window = parameters['instance']['params']['tracebackWindow']
-            data_start_time = get_time_offset(start_time, gran, -trace_back_window * 3)
+            data_start_time = get_time_offset(start_time, gran, -trace_back_window)
             if data_end_time > max_end_time:
                 max_end_time = data_end_time
             if data_start_time < min_start_time:
@@ -57,7 +60,10 @@ class LrPluginService(PluginService):
         factor_def = parameters['seriesSets']
         factors_data = self.tsanaclient.get_timeseries(parameters['apiEndpoint'], parameters['apiKey'], factor_def,
                                                        start_time, end_time, offset=0,
-                                                       top=self.config.series_limit_per_series_set)   
+                                                       top=self.config.series_limit_per_series_set)
+
+        #fill_missing = generate_filled_missing_by_field(factors_data, start_time, end_time, 'Custom', 300, Fill.Previous, 0)
+
         return factors_data
 
     def do_inference(self, model_dir, parameters, context):

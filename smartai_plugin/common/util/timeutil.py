@@ -30,7 +30,6 @@ def convert_freq(gran, custom_in_seconds):
 def str_to_dt(s):
     return parser.parse(s).replace(tzinfo=tz.UTC)
 
-
 def dt_to_str(dt):
     return dt.strftime(DT_FORMAT)
 
